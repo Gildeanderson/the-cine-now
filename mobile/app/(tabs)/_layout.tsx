@@ -1,12 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { BlurView } from 'expo-blur';
 import { Home, Compass, User } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/context/ThemeContext';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useAppTheme();
   const theme = Colors[colorScheme ?? 'dark'];
 
   return (
@@ -17,15 +16,14 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          borderTopWidth: 0,
-          backgroundColor: 'transparent',
-          elevation: 0,
+          borderTopWidth: 1,
+          borderTopColor: theme.outline,
+          backgroundColor: theme.surface,
+          elevation: 10,
           height: 60,
           paddingBottom: 8,
         },
-        tabBarBackground: () => (
-          <BlurView intensity={80} tint="dark" style={{ flex: 1 }} />
-        ),
+        tabBarInactiveTintColor: theme.icon,
       }}>
       <Tabs.Screen
         name="index"
@@ -40,6 +38,26 @@ export default function TabLayout() {
         options={{
           title: 'Explorar',
           tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color }) => <User size={24} color={color} />,
+        }}
+      />
+      {/* Hidden Screens that share the Tab Layout */}
+      <Tabs.Screen
+        name="detail/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="actor/[id]"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

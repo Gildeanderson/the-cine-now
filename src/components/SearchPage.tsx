@@ -57,7 +57,7 @@ export default function SearchPage() {
       className="px-8 md:px-16 space-y-12 atmosphere min-h-screen pb-20"
     >
       {/* Search Input */}
-      <div className="relative flex items-center gap-4 pt-8">
+      <div className="relative flex items-center gap-4 pt-24">
         <div className="relative flex-1 group">
           <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant group-focus-within:text-electric-indigo transition-colors" />
           <input

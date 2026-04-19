@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Mail, Lock, AlertCircle, ChevronLeft } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, ChevronLeft, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginPage() {
-  const { loginWithGoogle, loginWithEmail, loading } = useAuth();
+  const { loginWithGoogle, loginWithEmail, resetPassword, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +16,8 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -59,18 +63,37 @@ export default function LoginPage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Por favor, digite seu e-mail para resetar a senha.');
+      return;
+    }
+    setError(null);
+    setResetLoading(true);
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    } catch (err: any) {
+      setError('Erro ao enviar e-mail de recuperação. Verifique o endereço digitado.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-obsidian flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-electric-indigo"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col lg:flex-row overflow-hidden relative">
+    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row overflow-hidden relative">
+      <div className="neon-frame" />
       {/* Left Side: Banner Carousel */}
-      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-zinc-900 order-1 lg:order-1">
+      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
         <AnimatePresence mode="wait">
           {banners.length > 0 && (
             <motion.div
@@ -126,10 +149,26 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side: Form */}
-      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-white/5">
+      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-outline-variant/10">
+        
+        {/* Small Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          className="absolute top-8 right-8 p-3 rounded-full bg-surface-high border border-outline-variant/10 text-on-surface hover:scale-110 active:scale-95 transition-all shadow-lg z-50 overflow-hidden group"
+          aria-label="Toggle theme"
+        >
+          <motion.div
+            initial={false}
+            animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          >
+            {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
+          </motion.div>
+        </button>
+
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group mb-12"
+          className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors group mb-12 w-fit"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-bold uppercase tracking-widest">Voltar</span>
@@ -147,6 +186,17 @@ export default function LoginPage() {
               </h1>
               <p className="text-zinc-500 text-sm font-medium tracking-wide">Bem-vindo de volta! Entre na sua conta.</p>
             </div>
+
+            {resetSent && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3 text-green-500 text-xs font-bold"
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <p>E-mail de recuperação enviado! Verifique sua caixa de entrada.</p>
+              </motion.div>
+            )}
 
             {error && (
               <motion.div 
@@ -188,6 +238,16 @@ export default function LoginPage() {
                     className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
                   />
                 </div>
+                <div className="flex justify-end pr-1">
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetLoading}
+                    className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-electric-indigo transition-colors disabled:opacity-50"
+                  >
+                    {resetLoading ? 'Enviando...' : 'Esqueceu sua senha?'}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -222,6 +282,16 @@ export default function LoginPage() {
                 Comece sua jornada aqui
               </Link>
             </p>
+
+            {/* Author Credit - Restored for Login Screen */}
+            <div className="mt-auto pt-8 flex flex-col items-center gap-1.5 opacity-30 select-none">
+              <p className="text-[7px] font-black uppercase tracking-[0.3em] text-on-surface">
+                Desenvolvedor do Sistema
+              </p>
+              <p className="text-[10px] font-bold text-on-surface uppercase tracking-widest text-center">
+                Gildeanderson Nascimento
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>

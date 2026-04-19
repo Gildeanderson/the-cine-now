@@ -13,17 +13,22 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { Hero } from '@/components/Hero';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'dark'];
   const { toggleSave, isSaved } = useAuth();
   const [trending, setTrending] = useState<any[]>([]);
   const [trendingTV, setTrendingTV] = useState<any[]>([]);
   const [popular, setPopular] = useState<any[]>([]);
   const [nowPlaying, setNowPlaying] = useState<any[]>([]);
+  const [heroIndex, setHeroIndex] = useState(0);
   const [heroVideo, setHeroVideo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,12 +48,6 @@ export default function HomeScreen() {
         setPopular(popularRes.results);
         setNowPlaying(nowPlayingRes.results);
 
-        // Fetch video for first trending movie
-        if (trendingList[0]) {
-          const videos = await tmdbService.getMovieVideos(trendingList[0].id);
-          const trailer = videos.results.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
-          if (trailer) setHeroVideo(trailer.key);
-        }
       } catch (err) {
         console.error('Failed to load TMDB data:', err);
       } finally {
@@ -57,6 +56,33 @@ export default function HomeScreen() {
     };
     loadData();
   }, []);
+
+  // Rotação do Banner
+  useEffect(() => {
+    if (trending.length > 0) {
+      const interval = setInterval(() => {
+        setHeroIndex((prev) => (prev + 1) % Math.min(5, trending.length));
+      }, 7000); // Trocando de 5s para 7s
+      return () => clearInterval(interval);
+    }
+  }, [trending]);
+
+  // Carregar Trailer do filme em foco no Banner
+  useEffect(() => {
+    const fetchHeroVideo = async () => {
+      if (trending.length > 0) {
+        const currentHero = trending[heroIndex];
+        try {
+          const videos = await tmdbService.getMovieVideos(currentHero.id);
+          const trailer = videos.results.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+          setHeroVideo(trailer ? trailer.key : null);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    };
+    fetchHeroVideo();
+  }, [heroIndex, trending]);
 
   const handlePlayTrailer = async () => {
     if (heroVideo) {
@@ -72,16 +98,16 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ThemedText>Loading...</ThemedText>
-      </ThemedView>
+      </View>
     );
   }
 
-  const heroMovie = trending[0];
+  const heroMovie = trending[heroIndex] || trending[0];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <HomeHeader />
       <ScrollView bounces={false}>
         {/* Hero Banner */}
@@ -94,24 +120,24 @@ export default function HomeScreen() {
 
         {/* Sections */}
         <View style={styles.sectionsContainer}>
-          <Section title="Novidades" data={nowPlaying} />
+          <Section title="Novidades" data={nowPlaying} theme={theme} />
           
           <AIRecommendations />
 
-          <Section title="Populares no momento" data={popular} />
-          <Section title="Explorar Séries de TV" data={trendingTV} />
+          <Section title="Populares no momento" data={popular} theme={theme} />
+          <Section title="Explorar Séries de TV" data={trendingTV} theme={theme} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function Section({ title, data }: { title: string, data: any[] }) {
+function Section({ title, data, theme }: { title: string; data: any[]; theme: any }) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>{title}</ThemedText>
-        <Pressable><ThemedText style={styles.seeAll}>Ver tudo</ThemedText></Pressable>
+        <ThemedText type="subtitle" style={[styles.sectionTitle, { color: theme.text }]}>{title}</ThemedText>
+        <Pressable><ThemedText style={[styles.seeAll, { color: theme.tint }]}>Ver tudo</ThemedText></Pressable>
       </View>
       <FlatList
         horizontal
@@ -135,13 +161,11 @@ function Section({ title, data }: { title: string, data: any[] }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020205',
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#020205',
   },
   sectionsContainer: {
     marginTop: -120,
@@ -162,7 +186,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   seeAll: {
-    color: '#6b46ff',
     fontSize: 14,
     fontWeight: '600',
   },

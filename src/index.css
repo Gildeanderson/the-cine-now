@@ -5,23 +5,51 @@
   --font-headline: "Manrope", sans-serif;
   --font-display: "Anton", sans-serif;
 
-  --color-obsidian: #05070a;
-  --color-electric-indigo: #a3a6ff;
-  --color-indigo-dim: #6063ee;
-  --color-surface: #0a0c14;
-  --color-surface-low: #0f121d;
-  --color-surface-container: #141826;
-  --color-surface-high: #1a1f30;
-  --color-surface-highest: #20263a;
-  --color-on-surface: #f0f2ff;
-  --color-on-surface-variant: #9499b0;
-  --color-outline-variant: #3a3f55;
+  --color-obsidian: var(--obsidian);
+  --color-electric-indigo: var(--electric-indigo);
+  --color-indigo-dim: var(--indigo-dim);
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-high);
+  --color-surface-highest: var(--surface-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline-variant: var(--outline-variant);
   --color-accent: #ff4e00;
+}
+
+:root {
+  --obsidian: #05070a;
+  --electric-indigo: #a3a6ff;
+  --indigo-dim: #6063ee;
+  --surface: #0a0c14;
+  --surface-low: #0f121d;
+  --surface-container: #141826;
+  --surface-high: #1a1f30;
+  --surface-highest: #20263a;
+  --on-surface: #f0f2ff;
+  --on-surface-variant: #9499b0;
+  --outline-variant: #3a3f55;
+}
+
+.light {
+  --obsidian: #ffffff;
+  --electric-indigo: #5d34f0; /* Um pouco mais saturado para modo claro */
+  --indigo-dim: #4321c7;
+  --surface: #f3f5ff;
+  --surface-low: #ffffff;
+  --surface-container: #eef1fe;
+  --surface-high: #e2e7ff;
+  --surface-highest: #d5dbff;
+  --on-surface: #05070a;
+  --on-surface-variant: #3d4155; /* Texto secundário mais escuro para ler melhor */
+  --outline-variant: #cbd2f8; /* Bordas um pouco mais visíveis */
 }
 
 @layer base {
   body {
-    @apply bg-obsidian text-on-surface font-sans antialiased selection:bg-electric-indigo selection:text-obsidian;
+    @apply bg-obsidian text-on-surface font-sans antialiased selection:bg-electric-indigo selection:text-obsidian transition-colors duration-300;
   }
 }
 
@@ -53,4 +81,27 @@
   .text-glow {
     text-shadow: 0 0 20px rgba(163, 166, 255, 0.3);
   }
+  .neon-frame {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 
+      inset 0 0 40px rgba(0, 242, 254, 0.15),
+      inset 0 0 80px rgba(0, 242, 254, 0.08),
+      inset 0 0 150px rgba(0, 242, 254, 0.03);
+    border: 1px solid rgba(0, 242, 254, 0.1);
+    animation: neon-pulse 7s ease-in-out infinite;
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; filter: contrast(1.2); }
+}
+
+@keyframes glow-rotate {
+  0% { opacity: 0.3; filter: hue-rotate(0deg); }
+  50% { opacity: 0.6; filter: hue-rotate(15deg); }
+  100% { opacity: 0.3; filter: hue-rotate(0deg); }
 }

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle2, XCircle, ChevronLeft } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle2, XCircle, ChevronLeft, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
+import { useTheme } from '../context/ThemeContext';
 
 export default function RegisterPage() {
   const { registerWithEmail, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -69,16 +71,17 @@ export default function RegisterPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-obsidian flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-electric-indigo"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col lg:flex-row overflow-hidden relative">
+    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row overflow-hidden relative">
+      <div className="neon-frame" />
       {/* Left Side: Banner Carousel */}
-      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-zinc-900 order-1 lg:order-1">
+      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
         <AnimatePresence mode="wait">
           {banners.length > 0 && (
             <motion.div
@@ -134,10 +137,26 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Side: Form */}
-      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-white/5 overflow-y-auto">
+      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-outline-variant/10 overflow-y-auto">
+        
+        {/* Small Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          className="absolute top-8 right-8 p-3 rounded-full bg-surface-high border border-outline-variant/10 text-on-surface hover:scale-110 active:scale-95 transition-all shadow-lg z-50 overflow-hidden group"
+          aria-label="Toggle theme"
+        >
+          <motion.div
+            initial={false}
+            animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          >
+            {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
+          </motion.div>
+        </button>
+
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group mb-8"
+          className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors group mb-8 w-fit"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-bold uppercase tracking-widest">Voltar</span>
@@ -234,6 +253,16 @@ export default function RegisterPage() {
                 Fazer login
               </Link>
             </p>
+
+            {/* Author Credit - Restored for Register Screen */}
+            <div className="mt-auto pt-8 flex flex-col items-center gap-1.5 opacity-30 select-none">
+              <p className="text-[7px] font-black uppercase tracking-[0.3em] text-on-surface">
+                Desenvolvedor do Sistema
+              </p>
+              <p className="text-[10px] font-bold text-on-surface uppercase tracking-widest text-center">
+                Gildeanderson Nascimento
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>

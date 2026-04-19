@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey || "" });
 
 export interface Recommendation {
@@ -17,7 +17,7 @@ export const aiService = {
     continueWatching: string[]
   ): Promise<Recommendation[]> => {
     // Create a new instance right before the call to ensure the latest key is used
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
       console.warn("GEMINI_API_KEY is missing.");
       return [];

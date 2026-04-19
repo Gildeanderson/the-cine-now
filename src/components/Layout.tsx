@@ -20,17 +20,22 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-obsidian text-on-surface">
       {/* Top Bar */}
-      <header className={cn(
-        "fixed top-0 left-0 right-0 z-50 h-16 px-6 flex items-center justify-between transition-all duration-500",
-        scrolled ? "bg-obsidian/80 backdrop-blur-xl border-b border-white/5" : "bg-transparent"
-      )}>
-        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6">
+        {/* Background Layer to prevent render bugs on blur transition */}
+        <div 
+          className={cn(
+            "absolute inset-0 bg-obsidian/80 backdrop-blur-xl transition-opacity duration-500",
+            scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        />
+        
+        <div className="relative z-10 flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
           <Film className="w-5 h-5 text-electric-indigo/70 group-hover:text-electric-indigo transition-colors" />
           <h1 className="font-display text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-electric-indigo uppercase drop-shadow-[0_0_10px_rgba(163,166,255,0.3)]">
             The Cine Now
           </h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="relative z-10 flex items-center gap-3">
           <button 
             onClick={() => navigate('/search')}
             className="p-2 hover:bg-white/5 rounded-full transition-all active:scale-95 text-on-surface-variant/60 hover:text-on-surface"
@@ -59,7 +64,7 @@ export default function Layout() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-obsidian/80 backdrop-blur-xl border-t border-white/5 h-16 px-4 flex justify-around items-center">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-obsidian/80 backdrop-blur-xl h-16 px-4 flex justify-around items-center">
         <NavItem to="/" icon={<Home />} label="Home" />
         <NavItem to="/foryou" icon={<Sparkles />} label="Para Você" />
         <NavItem to="/search" icon={<Search />} label="Search" />

@@ -7,6 +7,8 @@ export const getImageUrl = (path: string | null, size: 'w500' | 'original' = 'w5
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
 
+let currentLanguage = localStorage.getItem('appLanguage') || 'pt-BR';
+
 async function fetchTMDB(endpoint: string, params: Record<string, string> = {}) {
   if (!TMDB_API_KEY) {
     throw new Error('TMDB API Key is missing. Please add VITE_TMDB_API_KEY to your environment variables.');
@@ -14,7 +16,7 @@ async function fetchTMDB(endpoint: string, params: Record<string, string> = {}) 
 
   const queryParams = new URLSearchParams({
     api_key: TMDB_API_KEY,
-    language: 'pt-BR',
+    language: currentLanguage,
     ...params
   });
 
@@ -34,13 +36,16 @@ async function fetchTMDB(endpoint: string, params: Record<string, string> = {}) 
 }
 
 export const tmdbService = {
+  setLanguage: (lang: string) => {
+    currentLanguage = lang;
+  },
   getTrending: () => fetchTMDB('/trending/movie/day'),
   getTrendingTV: () => fetchTMDB('/trending/tv/day'),
   getNowPlaying: () => fetchTMDB('/movie/now_playing'),
   getPopular: () => fetchTMDB('/movie/popular'),
   getPopularTV: () => fetchTMDB('/tv/popular'),
-  getMovieDetails: (id: string, language: string = 'pt-BR') => fetchTMDB(`/movie/${id}`, { append_to_response: 'credits,similar,videos', language }),
-  getTVDetails: (id: string, language: string = 'pt-BR') => fetchTMDB(`/tv/${id}`, { append_to_response: 'credits,similar,videos', language }),
+  getMovieDetails: (id: string, language?: string) => fetchTMDB(`/movie/${id}`, { append_to_response: 'credits,similar,videos', ...(language ? { language } : {}) }),
+  getTVDetails: (id: string, language?: string) => fetchTMDB(`/tv/${id}`, { append_to_response: 'credits,similar,videos', ...(language ? { language } : {}) }),
   searchMovies: (query: string) => fetchTMDB('/search/movie', { query }),
   searchTV: (query: string) => fetchTMDB('/search/tv', { query }),
   searchMulti: (query: string) => fetchTMDB('/search/multi', { query }),

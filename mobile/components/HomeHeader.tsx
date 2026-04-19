@@ -1,13 +1,38 @@
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ThemedText } from './themed-text';
-import { Search, Bell, User } from 'lucide-react-native';
+import { Search, Bell } from 'lucide-react-native';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/context/ThemeContext';
+import { scheduleTestNotification } from '@/services/notificationService';
+import { tmdbService, getImageUrl } from '@/services/tmdb-service';
+import * as Haptics from 'expo-haptics';
 
 export function HomeHeader() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useAppTheme();
   const theme = Colors[colorScheme ?? 'dark'];
+
+  const handleTestNotification = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      // Busca o filme em alta para usar o pôster na notificação
+      const trending = await tmdbService.getTrending();
+      const movie = trending.results?.[0];
+      const imageUrl = movie?.backdrop_path
+        ? getImageUrl(movie.backdrop_path, 'w500')
+        : undefined;
+
+      await scheduleTestNotification({
+        title: movie ? `🎬 ${movie.title || movie.name}` : '🎬 Cine Now',
+        body: movie?.overview?.slice(0, 100) + '...' || 'Novidades no Cine Now!',
+        imageUrl,
+      });
+      Alert.alert('🔔 Notificação Enviada!', `"${movie?.title || 'Filme'}" chegará em instantes.`);
+    } catch {
+      await scheduleTestNotification();
+      Alert.alert('🔔 Notificação Enviada!', 'Confira as novidades do Cine Now!');
+    }
+  };
 
   return (
     <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
@@ -17,10 +42,9 @@ export function HomeHeader() {
         </View>
         <View style={styles.actions}>
           <Search size={22} color={theme.icon} />
-          <Bell size={22} color={theme.icon} />
-          <View style={styles.avatar}>
-            <User size={18} color="#020205" fill="#020205" />
-          </View>
+          <Pressable onPress={handleTestNotification}>
+            <Bell size={22} color={theme.icon} />
+          </Pressable>
         </View>
       </View>
     </BlurView>
@@ -60,13 +84,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   }
 });

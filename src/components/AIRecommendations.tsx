@@ -5,8 +5,8 @@ import { Sparkles, Play, Info, Key } from 'lucide-react';
 import { aiService, Recommendation } from '../services/aiService';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useAuth } from '../context/AuthContext';
-import { useDraggableScroll } from '../hooks/useDraggableScroll';
 import { cn } from '../lib/utils';
+import Carousel from './Carousel';
 
 declare global {
   interface Window {
@@ -24,7 +24,7 @@ export default function AIRecommendations() {
   const [loading, setLoading] = useState(false);
   const [needsKey, setNeedsKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const scrollRef = useDraggableScroll();
+  
 
   const lastFetchedProfileRef = useRef<string>('');
 
@@ -44,7 +44,7 @@ export default function AIRecommendations() {
     }
 
     // Check if we have an API key or if we need to prompt the user
-    const hasKey = await window.aistudio?.hasSelectedApiKey?.() || !!process.env.GEMINI_API_KEY;
+    const hasKey = await window.aistudio?.hasSelectedApiKey?.() || !!import.meta.env.VITE_GEMINI_API_KEY;
     if (!hasKey) {
       setNeedsKey(true);
       return;
@@ -62,7 +62,7 @@ export default function AIRecommendations() {
 
       if (aiRecs.length === 0) {
         // If it returns empty, it might be a permission issue or just no data
-        const stillNoKey = !(await window.aistudio?.hasSelectedApiKey?.()) && !process.env.GEMINI_API_KEY;
+        const stillNoKey = !(await window.aistudio?.hasSelectedApiKey?.()) && !import.meta.env.VITE_GEMINI_API_KEY;
         if (stillNoKey) {
           setNeedsKey(true);
           setLoading(false);
@@ -126,13 +126,13 @@ export default function AIRecommendations() {
   if (needsKey) {
     return (
       <section className="py-12 px-8 md:px-16">
-        <div className="bg-surface-high rounded-[2rem] p-8 md:p-12 border border-white/5 flex flex-col md:flex-row items-center gap-8">
+        <div className="bg-surface-high rounded-[2rem] p-8 md:p-12 border border-outline-variant/10 flex flex-col md:flex-row items-center gap-8">
           <div className="p-6 rounded-full bg-electric-indigo/10 text-electric-indigo">
             <Key className="w-12 h-12" />
           </div>
           <div className="flex-1 space-y-4 text-center md:text-left">
             <h2 className="text-2xl font-display font-black uppercase tracking-tight">Ative a Inteligência Artificial</h2>
-            <p className="text-zinc-400 max-w-xl">
+            <p className="text-on-surface-variant max-w-xl">
               Para receber recomendações personalizadas, você precisa configurar sua chave de API do Gemini. 
               É rápido e gratuito para desenvolvedores.
             </p>
@@ -148,7 +148,7 @@ export default function AIRecommendations() {
                 href="https://ai.google.dev/gemini-api/docs/billing" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="px-8 py-3 rounded-full glass text-zinc-300 font-bold hover:bg-white/5 transition-all text-sm"
+                className="px-8 py-3 rounded-full glass text-on-surface font-bold hover:bg-on-surface/5 transition-all text-sm"
               >
                 Saiba Mais
               </a>
@@ -162,34 +162,24 @@ export default function AIRecommendations() {
   if (recommendations.length === 0 && !loading) return null;
 
   return (
-    <section className="py-12 space-y-8">
-      <div className="flex items-center gap-3 px-8 md:px-16">
-        <div className="p-2 rounded-xl bg-electric-indigo/20 text-electric-indigo">
-          <Sparkles className="w-6 h-6" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-display font-black tracking-tight uppercase">Para Você</h2>
-          <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Recomendações de IA personalizadas</p>
-        </div>
-      </div>
-
+    <Carousel 
+      title="Para Você" 
+      icon={<Sparkles className="w-5 h-5" />}
+    >
       {loading ? (
-        <div className="px-8 md:px-16 flex gap-6 overflow-hidden">
+        <div className="flex gap-6 overflow-hidden">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="min-w-[280px] aspect-[16/9] rounded-3xl bg-white/5 animate-pulse" />
+            <div key={i} className="min-w-[280px] aspect-[16/9] rounded-3xl bg-surface-high animate-pulse" />
           ))}
         </div>
       ) : (
-        <div 
-          {...scrollRef}
-          className="flex gap-6 overflow-x-auto px-8 md:px-16 pb-8 hide-scrollbar select-none"
-        >
+        <>
           {recommendations.map((item) => (
             <motion.div
               key={`${item.media_type}-${item.id}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="min-w-[320px] md:min-w-[400px] group relative aspect-[16/9] rounded-3xl overflow-hidden cursor-pointer shadow-2xl border border-white/5"
+              className="min-w-[320px] md:min-w-[400px] group relative aspect-[16/9] rounded-3xl overflow-hidden cursor-pointer shadow-2xl border border-outline-variant/10"
               onClick={() => navigate(`/${item.media_type || (item.title ? 'movie' : 'tv')}/${item.id}`)}
             >
               <img
@@ -230,8 +220,8 @@ export default function AIRecommendations() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </>
       )}
-    </section>
+    </Carousel>
   );
 }

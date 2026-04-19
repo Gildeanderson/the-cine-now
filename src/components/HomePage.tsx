@@ -7,7 +7,8 @@ import VideoPlayer from './VideoPlayer';
 import AIRecommendations from './AIRecommendations';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
-import { useDraggableScroll } from '../hooks/useDraggableScroll';
+import Carousel from './Carousel';
+import { Sparkles, TrendingUp, Tv, Film } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -26,9 +27,7 @@ export default function HomePage() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [heroTrailer, setHeroTrailer] = useState<any>(null);
   
-  const continueWatchingScroll = useDraggableScroll();
-  const trendingScroll = useDraggableScroll();
-  const tvSeriesScroll = useDraggableScroll();
+  
 
   useEffect(() => {
     const loadGenreMovies = async () => {
@@ -265,79 +264,57 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Section 1: Continue Watching or Trending Fallback */}
-      <section className="space-y-6 -mt-24 relative z-10">
-        {(continueWatching.length > 0 || trending.length > 0) && (
-          <>
-            <div className="px-6 flex justify-between items-center">
-              <h3 className="font-headline text-2xl font-bold tracking-tight">
-                {continueWatching.length > 0 ? 'Continue Watching' : 'Trending This Week'}
-              </h3>
-              <button className="text-on-surface-variant hover:text-electric-indigo transition-colors">
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </div>
-            <div 
-              {...continueWatchingScroll}
-              className="flex gap-6 px-6 overflow-x-auto hide-scrollbar pb-4 select-none"
+      {/* Section 1: Continue Watching or Trending */}
+      {(continueWatching.length > 0 || trending.length > 0) && (
+        <Carousel 
+          title={continueWatching.length > 0 ? 'Continue Assistindo' : 'Tendências da Semana'}
+          icon={<TrendingUp className="w-5 h-5" />}
+        >
+          {(continueWatching.length > 0 ? continueWatching : trending).slice(0, 40).map((movie, i) => (
+            <Link 
+              key={`${movie.media_type || 'movie'}-${movie.id}-${i}`} 
+              to={`/${movie.media_type || 'movie'}/${movie.id}`} 
+              className={cn(
+                "flex-none group",
+                continueWatching.length > 0 ? "w-72 md:w-80" : "w-40 md:w-48"
+              )}
+              onClick={() => addToContinueWatching(movie.id.toString())}
             >
-              {(continueWatching.length > 0 ? continueWatching : trending).slice(0, 10).map((movie, i) => (
-                <Link 
-                  key={`${movie.media_type || 'movie'}-${movie.id}-${i}`} 
-                  to={`/${movie.media_type || 'movie'}/${movie.id}`} 
-                  className={cn(
-                    "flex-none group",
-                    continueWatching.length > 0 ? "w-72 md:w-80" : "w-40 md:w-48"
-                  )}
-                  onClick={() => addToContinueWatching(movie.id.toString())}
-                >
-                  <div className={cn(
-                    "relative overflow-hidden mb-4 shadow-2xl transition-all duration-500 group-hover:-translate-y-2",
-                    continueWatching.length > 0 ? "aspect-video rounded-2xl" : "aspect-[2/3] rounded-2xl"
-                  )}>
-                    <img
-                      src={getImageUrl(continueWatching.length > 0 ? movie.backdrop_path : movie.poster_path)}
-                      alt={movie.title || movie.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="w-12 h-12 rounded-full glass flex items-center justify-center">
-                        <Play className="w-6 h-6 text-white fill-current ml-1" />
-                      </div>
-                    </div>
-                    {continueWatching.length > 0 && (
-                      <div className="absolute bottom-0 left-0 w-full h-1.5 bg-white/10">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.random() * 60 + 20}%` }}
-                          className="h-full bg-electric-indigo shadow-[0_0_10px_rgba(163,166,255,0.5)]" 
-                        />
-                      </div>
-                    )}
-                    {!continueWatching.length && (
-                      <div className="absolute top-3 left-3 w-8 h-8 rounded-full glass flex items-center justify-center font-display text-lg font-black text-electric-indigo">
-                        {i + 1}
-                      </div>
-                    )}
+              <div className={cn(
+                "relative overflow-hidden mb-4 shadow-2xl transition-all duration-500 group-hover:-translate-y-2",
+                continueWatching.length > 0 ? "aspect-video rounded-2xl" : "aspect-[2/3] rounded-2xl"
+              )}>
+                <img
+                  src={getImageUrl(continueWatching.length > 0 ? movie.backdrop_path : movie.poster_path)}
+                  alt={movie.title || movie.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="w-12 h-12 rounded-full glass flex items-center justify-center">
+                    <Play className="w-6 h-6 text-white fill-current ml-1" />
                   </div>
-                  <h4 className={cn(
-                    "font-headline font-bold truncate group-hover:text-electric-indigo transition-colors",
-                    continueWatching.length > 0 ? "text-base" : "text-sm"
-                  )}>
-                    {movie.title || movie.name}
-                  </h4>
-                  {continueWatching.length > 0 && (
-                    <p className="text-xs text-on-surface-variant mt-1 font-medium uppercase tracking-wider">
-                      {Math.floor(Math.random() * 45 + 5)}m remaining
-                    </p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+                </div>
+                {continueWatching.length > 0 && (
+                  <div className="absolute bottom-0 left-0 w-full h-1.5 bg-white/10">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.random() * 60 + 20}%` }}
+                      className="h-full bg-electric-indigo shadow-[0_0_10px_rgba(163,166,255,0.5)]" 
+                    />
+                  </div>
+                )}
+              </div>
+              <h4 className={cn(
+                "font-headline font-bold truncate group-hover:text-electric-indigo transition-colors px-2",
+                continueWatching.length > 0 ? "text-base" : "text-sm"
+              )}>
+                {movie.title || movie.name}
+              </h4>
+            </Link>
+          ))}
+        </Carousel>
+      )}
 
       {/* AI Recommendations */}
       <AIRecommendations />
@@ -369,71 +346,72 @@ export default function HomePage() {
       </section>
 
       {/* Popular TV Series */}
-      <section className="space-y-6">
-        <div className="px-6 flex justify-between items-center">
-          <h3 className="font-headline text-2xl font-bold tracking-tight">Popular TV Series</h3>
-          <button className="text-on-surface-variant hover:text-electric-indigo transition-colors">
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-        <div 
-          {...tvSeriesScroll}
-          className="flex gap-4 px-6 overflow-x-auto hide-scrollbar pb-4 select-none"
-        >
-          {popularTV.slice(0, 10).map((tv, i) => (
-            <Link key={`tv-${tv.id}-${i}`} to={`/tv/${tv.id}`} className="flex-none w-40 md:w-48 group">
-              <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
-                <img
-                  src={getImageUrl(tv.poster_path)}
-                  alt={tv.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
+      <Carousel title="Séries de TV Populares" icon={<Tv className="w-5 h-5" />}>
+        {popularTV.slice(0, 40).map((tv, i) => (
+          <Link key={`tv-${tv.id}-${i}`} to={`/tv/${tv.id}`} className="flex-none w-40 md:w-48 group">
+            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
+              <img
+                src={getImageUrl(tv.poster_path)}
+                alt={tv.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <h4 className="font-headline font-bold text-sm truncate group-hover:text-electric-indigo transition-colors px-2">{tv.name}</h4>
+            <div className="flex items-center gap-2 mt-1 px-2">
+              <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">
+                {tv.first_air_date?.split('-')[0]}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-outline-variant" />
+              <div className="flex items-center gap-0.5 text-yellow-500">
+                <Star className="w-2.5 h-2.5 fill-current" />
+                <span className="text-[10px] font-bold">{tv.vote_average?.toFixed(1)}</span>
               </div>
-              <h4 className="font-headline font-bold text-sm truncate group-hover:text-electric-indigo transition-colors">{tv.name}</h4>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">
-                  {tv.first_air_date?.split('-')[0]}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-outline-variant" />
-                <div className="flex items-center gap-0.5 text-yellow-500">
-                  <Star className="w-2.5 h-2.5 fill-current" />
-                  <span className="text-[10px] font-bold">{tv.vote_average?.toFixed(1)}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+            </div>
+          </Link>
+        ))}
+      </Carousel>
 
-      {/* Popular Grid */}
-      <section className="px-6 space-y-6 pb-12">
-        <div className="flex items-center justify-between">
-          <h3 className="font-headline text-2xl font-bold tracking-tight">Popular Right Now</h3>
-          <button className="text-on-surface-variant hover:text-electric-indigo transition-colors">
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {popular.slice(0, 10).map((movie, i) => (
-            <Link key={`popular-${movie.id}-${i}`} to={`/movie/${movie.id}`} className="group">
-              <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
-                <img
-                  src={getImageUrl(movie.poster_path)}
-                  alt={movie.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <h4 className="font-headline font-bold text-sm truncate group-hover:text-electric-indigo transition-colors">{movie.title}</h4>
-              <p className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mt-1">
-                {movie.release_date?.split('-')[0]}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Popular Movies Carousel */}
+      <Carousel title="Filmes de Sucesso" icon={<Film className="w-5 h-5 text-electric-indigo" />}>
+        {popular.slice(0, 40).map((movie, i) => (
+          <Link key={`popular-${movie.id}-${i}`} to={`/movie/${movie.id}`} className="flex-none w-40 md:w-48 group">
+            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
+              <img
+                src={getImageUrl(movie.poster_path)}
+                alt={movie.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <h4 className="font-headline font-bold text-sm truncate group-hover:text-electric-indigo transition-colors px-2">{movie.title}</h4>
+            <p className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mt-1 px-2">
+              {movie.release_date?.split('-')[0]}
+            </p>
+          </Link>
+        ))}
+      </Carousel>
+
+      {/* Another Carousel for Top Rated (using trending TV for variety) */}
+      <Carousel title="Destaques na TV" icon={<Sparkles className="w-5 h-5 text-electric-indigo" />}>
+        {trendingTV.slice(0, 40).map((tv, i) => (
+          <Link key={`trending-tv-${tv.id}-${i}`} to={`/tv/${tv.id}`} className="flex-none w-40 md:w-48 group">
+            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
+              <img
+                src={getImageUrl(tv.poster_path)}
+                alt={tv.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <h4 className="font-headline font-bold text-sm truncate group-hover:text-electric-indigo transition-colors px-2">{tv.name}</h4>
+            <p className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest mt-1 px-2">
+              {tv.first_air_date?.split('-')[0]}
+            </p>
+          </Link>
+        ))}
+      </Carousel>
     </motion.div>
   );
 }

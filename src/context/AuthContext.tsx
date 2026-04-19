@@ -9,7 +9,8 @@ import {
   db,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from '../firebase';
 import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
@@ -73,6 +74,7 @@ interface UserProfile {
   saved: string[];
   followingActors: string[];
   continueWatching: string[];
+  notificationsEnabled?: boolean;
   createdAt?: any;
 }
 
@@ -88,7 +90,9 @@ interface AuthContextType {
   toggleLike: (movieId: string) => Promise<void>;
   toggleSave: (movieId: string) => Promise<void>;
   toggleFollowActor: (actorId: string) => Promise<void>;
+  toggleNotifications: (enabled: boolean) => Promise<void>;
   addToContinueWatching: (movieId: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,25 +117,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         const userRef = doc(db, 'users', user.uid);
-        try {
-          await setDoc(userRef, {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            createdAt: new Date().toISOString()
-          }, { merge: true });
-        } catch (error) {
-          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
-        }
+        
+        // Sync user data in background
+        const syncUser = async () => {
+          try {
+            await setDoc(userRef, {
+              uid: user.uid,
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              createdAt: new Date().toISOString()
+            }, { merge: true });
+          } catch (error) {
+            console.error('Error syncing user data:', error);
+          }
+        };
+        syncUser();
+
+        // Security timeout: If profile doesn't load in 3 seconds, unstick the UI
+        const failsafe = setTimeout(() => {
+          setLoading(false);
+        }, 3000);
 
         unsubProfile = onSnapshot(userRef, (doc) => {
+          clearTimeout(failsafe);
           if (doc.exists()) {
             setProfile(doc.data() as UserProfile);
+          } else {
+            setProfile(null);
           }
           setLoading(false);
         }, (error) => {
-          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+          clearTimeout(failsafe);
+          console.error("Profile snapshot error:", error);
           setLoading(false);
         });
       } else {
@@ -192,6 +210,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      throw error;
+    }
+  };
+
   const toggleLike = async (movieId: string) => {
     if (!user || !profile) return;
     const userRef = doc(db, 'users', user.uid);
@@ -234,6 +261,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleNotifications = async (enabled: boolean) => {
+    if (!user || !profile) return;
+    const userRef = doc(db, 'users', user.uid);
+    try {
+      await updateDoc(userRef, {
+        notificationsEnabled: enabled
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+    }
+  };
+
   const addToContinueWatching = async (movieId: string) => {
     if (user && profile) {
       const userRef = doc(db, 'users', user.uid);
@@ -267,7 +306,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toggleLike, 
       toggleSave,
       toggleFollowActor,
-      addToContinueWatching
+      toggleNotifications,
+      addToContinueWatching,
+      resetPassword
     }}>
       {children}
     </AuthContext.Provider>

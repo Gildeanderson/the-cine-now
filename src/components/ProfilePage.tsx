@@ -5,12 +5,33 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import { notificationService } from '../services/notificationService';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ProfilePage() {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, toggleNotifications } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [followedActors, setFollowedActors] = useState<any[]>([]);
   const [loadingActors, setLoadingActors] = useState(false);
+
+  const handleToggleNotifications = async () => {
+    const isEnabled = !profile?.notificationsEnabled;
+    
+    if (isEnabled) {
+      const granted = await notificationService.requestPermission();
+      if (!granted) {
+        alert('Para receber avisos sobre novos filmes e seus atores favoritos, você precisa permitir as notificações no navegador.');
+        return;
+      }
+      // Confirmação visual imediata
+      notificationService.notifyEnabled();
+    }
+    
+    await toggleNotifications(isEnabled);
+  };
 
   useEffect(() => {
     const fetchFollowedActors = async () => {
@@ -32,7 +53,7 @@ export default function ProfilePage() {
     };
 
     fetchFollowedActors();
-  }, [profile?.followingActors]);
+  }, [profile?.followingActors?.join(',')]);
 
   return (
     <motion.div
@@ -121,19 +142,36 @@ export default function ProfilePage() {
       {/* Settings */}
       <div className="space-y-8">
         <div className="space-y-3">
-          <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">App Preferences</h2>
+          <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">{t('profile.prefs')}</h2>
           <div className="bg-surface-low rounded-2xl overflow-hidden divide-y divide-outline-variant/5">
-            <ToggleItem icon={<Moon />} title="Dark Mode" description="Switch between appearance modes" checked />
-            <ToggleItem icon={<Bell />} title="Push Notifications" description="Stay updated on new releases" checked />
+            <ToggleItem 
+              icon={<Moon />} 
+              title={t('profile.darkmode')} 
+              description={t('profile.darkmode.desc')} 
+              checked={theme === 'dark'} 
+              onToggle={toggleTheme}
+            />
+            <ToggleItem 
+              icon={<Bell />} 
+              title={t('profile.push')} 
+              description={t('profile.push.desc')} 
+              checked={profile?.notificationsEnabled} 
+              onToggle={handleToggleNotifications}
+            />
           </div>
         </div>
 
         <div className="space-y-3">
-          <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">Account Management</h2>
+          <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">{t('profile.account')}</h2>
           <div className="bg-surface-low rounded-2xl overflow-hidden divide-y divide-outline-variant/5">
-            <SettingItem icon={<User />} title="Account Details" />
-            <SettingItem icon={<Download />} title="Downloads" />
-            <SettingItem icon={<Globe />} title="Language" badge="EN" />
+            <SettingItem icon={<User />} title={t('profile.details')} />
+            <SettingItem icon={<Download />} title={t('profile.downloads')} />
+            <SettingItem 
+              icon={<Globe />} 
+              title={t('profile.language')} 
+              badge={language === 'pt-BR' ? 'PT-BR' : 'EN'} 
+              onClick={toggleLanguage}
+            />
           </div>
         </div>
 
@@ -142,7 +180,7 @@ export default function ProfilePage() {
           className="w-full flex items-center justify-center gap-2 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 hover:bg-red-500/20 transition-all active:scale-[0.98]"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-bold tracking-tight">Sign Out</span>
+          <span className="font-bold tracking-tight">{t('profile.signout')}</span>
         </button>
         
         <p className="text-center text-[10px] text-on-surface-variant/40 tracking-widest font-medium">
@@ -153,7 +191,7 @@ export default function ProfilePage() {
   );
 }
 
-function ToggleItem({ icon, title, description, checked }: { icon: React.ReactNode; title: string; description: string; checked?: boolean }) {
+function ToggleItem({ icon, title, description, checked, onToggle }: { icon: React.ReactNode; title: string; description: string; checked?: boolean; onToggle?: () => void }) {
   return (
     <div className="flex items-center justify-between p-5">
       <div className="flex items-center gap-4">
@@ -161,27 +199,30 @@ function ToggleItem({ icon, title, description, checked }: { icon: React.ReactNo
           {icon}
         </div>
         <div>
-          <p className="font-medium">{title}</p>
+          <p className="font-medium text-on-surface">{title}</p>
           <p className="text-xs text-on-surface-variant">{description}</p>
         </div>
       </div>
-      <div className={cn("w-11 h-6 rounded-full relative transition-colors", checked ? "bg-electric-indigo" : "bg-surface-highest")}>
-        <div className={cn("absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform", checked && "translate-x-5")} />
-      </div>
+      <button 
+        onClick={onToggle}
+        className={cn("w-11 h-6 rounded-full relative transition-all duration-300", checked ? "bg-electric-indigo" : "bg-surface-highest")}
+      >
+        <div className={cn("absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-sm", checked && "translate-x-5")} />
+      </button>
     </div>
   );
 }
 
-function SettingItem({ icon, title, badge }: { icon: React.ReactNode; title: string; badge?: string }) {
+function SettingItem({ icon, title, badge, onClick }: { icon: React.ReactNode; title: string; badge?: string; onClick?: () => void }) {
   return (
-    <button className="w-full flex items-center justify-between p-5 hover:bg-surface-high transition-colors text-left group">
+    <button onClick={onClick} className="w-full flex items-center justify-between p-5 hover:bg-surface-high transition-colors text-left group">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-high text-on-surface group-hover:text-electric-indigo transition-colors">
           {icon}
         </div>
         <div className="flex items-center gap-2">
           <p className="font-medium">{title}</p>
-          {badge && <span className="text-[10px] bg-surface-highest px-2 py-0.5 rounded-full text-on-surface-variant">{badge}</span>}
+          {badge && <span className="text-[10px] bg-electric-indigo/20 px-2 py-0.5 rounded-full text-electric-indigo font-bold tracking-widest">{badge}</span>}
         </div>
       </div>
       <ChevronRight className="w-4 h-4 text-on-surface-variant" />

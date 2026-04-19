@@ -6,7 +6,7 @@ import { tmdbService, getImageUrl } from '../services/tmdbService';
 import VideoPlayer from './VideoPlayer';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
-import { useDraggableScroll } from '../hooks/useDraggableScroll';
+import Carousel from './Carousel';
 
 export default function MovieDetailsPage() {
   const { id } = useParams();
@@ -20,7 +20,7 @@ export default function MovieDetailsPage() {
   const isLiked = id ? profile?.likes?.includes(id) : false;
   const isSaved = id ? profile?.saved?.includes(id) : false;
 
-  const similarScroll = useDraggableScroll();
+  
 
   useEffect(() => {
     const loadMovie = async () => {
@@ -85,15 +85,22 @@ export default function MovieDetailsPage() {
   const similar = movie.similar?.results?.slice(0, 8) || [];
   const trailer = movie.videos?.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube') || movie.videos?.results?.[0];
 
-  const handlePlay = () => {
-    console.log('handlePlay clicked. trailer:', trailer, 'movie:', movie);
+  const handleShowTrailer = () => {
     if (trailer) {
-      if (movie) {
-        addToContinueWatching(movie.id.toString());
-      }
       setShowPlayer(true);
     } else {
-      alert('Trailer not available for this movie.');
+      alert('Trailer não disponível para este título no momento.');
+    }
+  };
+
+  const handleWatchNow = () => {
+    // Para um sistema de clone, aqui poderíamos integrar um player de filme real
+    // Por enquanto, se não houver player, mostramos o trailer
+    if (trailer) {
+      addToContinueWatching(movie.id.toString());
+      setShowPlayer(true);
+    } else {
+      alert('O filme ainda não está disponível para exibição.');
     }
   };
 
@@ -152,18 +159,11 @@ export default function MovieDetailsPage() {
             className="flex flex-wrap gap-3"
           >
             <button 
-              onClick={handlePlay}
+              onClick={handleShowTrailer}
               className="px-8 py-4 rounded-full bg-electric-indigo text-obsidian font-bold text-base flex items-center justify-center gap-2 hover:bg-electric-indigo/90 active:scale-95 transition-all shadow-xl shadow-electric-indigo/10"
             >
               <Play className="w-5 h-5 fill-current" />
-              Watch Now
-            </button>
-            <button 
-              onClick={handlePlay}
-              className="px-8 py-4 rounded-full bg-surface-high/40 backdrop-blur-xl text-on-surface font-bold text-base flex items-center justify-center gap-2 hover:bg-white/10 active:scale-95 transition-all border border-white/5"
-            >
-              <Film className="w-5 h-5" />
-              Trailer
+              Assistir Trailer
             </button>
             <button 
               onClick={() => {
@@ -279,51 +279,40 @@ export default function MovieDetailsPage() {
       </section>
 
       {/* Similar Movies */}
-      <section className="mt-20 space-y-8">
-        <div className="px-8 md:px-16 flex items-baseline justify-between">
-          <h2 className="text-2xl font-headline font-bold tracking-tight uppercase">Similar Movies</h2>
-          <button className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors">
-            See All
-          </button>
-        </div>
-        <div 
-          {...similarScroll}
-          className="flex gap-8 overflow-x-auto px-8 md:px-16 pb-12 hide-scrollbar select-none"
-        >
-          {similar.map((m: any) => (
-            <div 
-              key={m.id} 
-              className="min-w-[280px] group cursor-pointer" 
-              onClick={() => navigate(`/movie/${m.id}`)}
-            >
-              <div className="aspect-[2/3] rounded-3xl overflow-hidden mb-6 relative shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-electric-indigo/20">
-                <img 
-                  src={getImageUrl(m.poster_path)} 
-                  alt={m.title} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  referrerPolicy="no-referrer" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full glass flex items-center justify-center">
-                    <Play className="w-7 h-7 text-white fill-current ml-1" />
-                  </div>
-                </div>
-              </div>
-              <h4 className="font-headline font-bold text-xl mb-2 truncate group-hover:text-electric-indigo transition-colors">{m.title}</h4>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">
-                  {m.release_date?.split('-')[0]}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
-                <div className="flex items-center gap-1 text-yellow-500">
-                  <Star className="w-3 h-3 fill-current" />
-                  <span className="text-xs font-bold">{m.vote_average?.toFixed(1)}</span>
+      <Carousel title="Filmes Similares" icon={<Film className="w-5 h-5 text-electric-indigo" />}>
+        {similar.map((m: any) => (
+          <div 
+            key={m.id} 
+            className="min-w-[280px] group cursor-pointer" 
+            onClick={() => navigate(`/movie/${m.id}`)}
+          >
+            <div className="aspect-[2/3] rounded-3xl overflow-hidden mb-6 relative shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-electric-indigo/20">
+              <img 
+                src={getImageUrl(m.poster_path)} 
+                alt={m.title} 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full glass flex items-center justify-center">
+                  <Play className="w-7 h-7 text-white fill-current ml-1" />
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+            <h4 className="font-headline font-bold text-xl mb-2 truncate group-hover:text-electric-indigo transition-colors px-2">{m.title}</h4>
+            <div className="flex items-center gap-3 px-2">
+              <span className="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">
+                {m.release_date?.split('-')[0]}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
+              <div className="flex items-center gap-1 text-yellow-500">
+                <Star className="w-3 h-3 fill-current" />
+                <span className="text-xs font-bold">{m.vote_average?.toFixed(1)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </Carousel>
     </motion.div>
   );
 }

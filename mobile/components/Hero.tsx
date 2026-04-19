@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View, Pressable, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, Pressable, Dimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Info, BookmarkCheck, BookmarkPlus } from 'lucide-react-native';
@@ -7,6 +7,8 @@ import { getImageUrl } from '@/services/tmdb-service';
 import { ThemedText } from './themed-text';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -18,6 +20,19 @@ interface HeroProps {
 }
 
 export function Hero({ movie, onPlay, onToggleSave, isSaved }: HeroProps) {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'dark'];
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500, // Mais ágil
+      useNativeDriver: true,
+    }).start();
+  }, [movie]);
+
   if (!movie) return null;
 
   return (
@@ -26,14 +41,14 @@ export function Hero({ movie, onPlay, onToggleSave, isSaved }: HeroProps) {
         source={{ uri: getImageUrl(movie.backdrop_path, 'original') }}
         style={styles.image}
         contentFit="cover"
-        transition={1000}
+        transition={500} // Transição dupla em sintonia com o texto
       />
       <LinearGradient
-        colors={['rgba(2, 2, 5, 0)', 'rgba(2, 2, 5, 0.4)', '#020205']}
+        colors={['rgba(0,0,0,0)', `rgba(0,0,0,0.5)`, theme.background] as any}
         style={styles.gradient}
       />
       
-      <View style={styles.content}>
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <ThemedText style={styles.trendingBadge}>Bombando Hoje</ThemedText>
         <ThemedText type="title" style={styles.title} numberOfLines={2}>
           {movie.title || movie.name}
@@ -44,34 +59,11 @@ export function Hero({ movie, onPlay, onToggleSave, isSaved }: HeroProps) {
             style={styles.playButton}
             onPress={() => onPlay(movie)}
           >
-            <Play size={20} color="#020205" fill="#020205" />
+            <Play size={12} color="#020205" fill="#020205" />
             <ThemedText style={styles.playButtonText}>Assistir Trailer</ThemedText>
           </Pressable>
-
-          <View style={styles.actionButtons}>
-            <Pressable 
-              style={styles.circleButton}
-              onPress={() => {
-                Haptics.selectionAsync();
-                router.push({ pathname: '/detail/[id]', params: { id: movie.id, type: movie.media_type || 'movie' } });
-              }}
-            >
-              <Info size={22} color="#fff" />
-            </Pressable>
-
-            <Pressable 
-              style={styles.circleButton}
-              onPress={() => onToggleSave(movie.id.toString())}
-            >
-              {isSaved(movie.id) ? (
-                <BookmarkCheck size={22} color="#6b46ff" />
-              ) : (
-                <BookmarkPlus size={22} color="#fff" />
-              )}
-            </Pressable>
-          </View>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -94,14 +86,15 @@ const styles = StyleSheet.create({
   },
   content: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 140, // 20px acima da lista sobreposta (-120px)
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
     alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 2,
   },
   trendingBadge: {
-    color: '#6b46ff',
+    color: '#A3A6FF', // Mais claro para dar contraste máximo de acessibilidade 
     fontSize: 12,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -129,36 +122,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 30,
-    gap: 12,
-    width: '80%',
+    gap: 1, // Extremamente colado
+    alignSelf: 'center',
     justifyContent: 'center',
-    elevation: 8,
+    elevation: 4,
     shadowColor: '#fff',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
   playButtonText: {
     color: '#020205',
     fontWeight: '900',
-    fontSize: 16,
+    fontSize: 10, 
     textTransform: 'uppercase',
+    textAlign: 'center',
+    includeFontPadding: false, // Remove o padding invisível padrão do Android
+    lineHeight: 12, // Força a centralização vertical exata
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  circleButton: {
-    width: 54,
-    height: 54,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 27,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
+  // Removidos os estilos actionButtons e circleButton que não são mais necessários
 });
