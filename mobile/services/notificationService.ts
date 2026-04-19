@@ -39,7 +39,7 @@ export async function registerForPushNotificationsAsync() {
     
     try {
       token = (await Notifications.getExpoPushTokenAsync({
-        projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID || '70a74708-111a-42c1-82b1-e328427ee85f', 
+        projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID || 'expo-go-dummy-id', 
       })).data;
     } catch (e) {
       console.log('Expo Push Token bypassado para testes locais.', e);
