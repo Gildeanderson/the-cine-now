@@ -10,9 +10,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  deleteUser
 } from '../firebase';
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 
 enum OperationType {
   CREATE = 'create',
@@ -93,6 +94,7 @@ interface AuthContextType {
   toggleNotifications: (enabled: boolean) => Promise<void>;
   addToContinueWatching: (movieId: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
-              createdAt: new Date().toISOString()
+              updatedAt: new Date().toISOString()
             }, { merge: true });
           } catch (error) {
             console.error('Error syncing user data:', error);
@@ -293,6 +295,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    if (!user) return;
+    
+    try {
+      // 1. Delete Firestore data
+      const userRef = doc(db, 'users', user.uid);
+      await deleteDoc(userRef);
+      
+      // 2. Delete Auth user
+      await deleteUser(user);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -308,7 +326,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toggleFollowActor,
       toggleNotifications,
       addToContinueWatching,
-      resetPassword
+      resetPassword,
+      deleteAccount
     }}>
       {children}
     </AuthContext.Provider>

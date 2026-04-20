@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ChevronLeft, Star, Play, User as UserIcon, Heart } from 'lucide-react';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 import { useDraggableScroll } from '../hooks/useDraggableScroll';
 
@@ -11,6 +12,7 @@ export default function PersonDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile, toggleFollowActor } = useAuth();
+  const { t } = useLanguage();
   const [person, setPerson] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,13 +31,13 @@ export default function PersonDetailsPage() {
         setPerson(data);
       } catch (err) {
         console.error('Failed to load person details:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load person details');
+        setError(err instanceof Error ? err.message : t('person.error.not_found'));
       } finally {
         setLoading(false);
       }
     };
     loadPerson();
-  }, [id]);
+  }, [id, t]);
 
   if (loading) {
     return (
@@ -51,13 +53,13 @@ export default function PersonDetailsPage() {
         <div className="p-4 rounded-full bg-destructive/10 text-destructive">
           <UserIcon className="w-12 h-12" />
         </div>
-        <h2 className="text-2xl font-bold">Actor not found</h2>
-        <p className="text-on-surface-variant max-w-md">{error || 'Could not find details for this person.'}</p>
+        <h2 className="text-2xl font-bold">{t('person.error.not_found')}</h2>
+        <p className="text-on-surface-variant max-w-md">{error || t('person.no_biography')}</p>
         <button 
           onClick={() => navigate(-1)}
           className="px-6 py-2 bg-surface-high text-on-surface font-bold rounded-full"
         >
-          Go Back
+          {t('auth.back')}
         </button>
       </div>
     );
@@ -148,18 +150,18 @@ export default function PersonDetailsPage() {
                 )}
               >
                 <Heart className={cn("w-4 h-4", isFollowing && "fill-current")} />
-                {isFollowing ? 'Following' : 'Follow Actor'}
+                {isFollowing ? t('person.following') : t('person.follow')}
               </button>
               
               <div className="flex items-center gap-6 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
                 <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Popularity</p>
+                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{t('person.popularity')}</p>
                   <p className="text-lg font-black text-white">{person.popularity?.toFixed(0)}</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
-                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Place of Birth</p>
-                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{person.place_of_birth || 'N/A'}</p>
+                  <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{t('person.birthplace')}</p>
+                  <p className="text-sm font-bold text-white truncate max-w-[150px]">{person.place_of_birth || t('details.not_available')}</p>
                 </div>
               </div>
             </motion.div>
@@ -171,9 +173,9 @@ export default function PersonDetailsPage() {
       <section className="px-8 md:px-16 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-16">
           <div className="space-y-4">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Biography</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('person.biography')}</h3>
             <p className="text-lg font-medium leading-relaxed text-on-surface/80">
-              {person.biography || `No biography available for ${person.name}.`}
+              {person.biography || t('person.no_biography')}
             </p>
           </div>
 
@@ -181,7 +183,7 @@ export default function PersonDetailsPage() {
           {movieCredits.length > 0 && (
             <div className="space-y-8">
               <div className="flex items-baseline justify-between">
-                <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Movies</h3>
+                <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('person.movies')}</h3>
               </div>
               <div 
                 {...movieScroll}
@@ -222,7 +224,7 @@ export default function PersonDetailsPage() {
           {tvCredits.length > 0 && (
             <div className="space-y-8">
               <div className="flex items-baseline justify-between">
-                <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">TV Shows</h3>
+                <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('person.tv')}</h3>
               </div>
               <div 
                 {...tvScroll}
@@ -262,24 +264,24 @@ export default function PersonDetailsPage() {
 
         <div className="space-y-6">
           <div className="bg-surface-high/40 backdrop-blur-xl rounded-3xl p-8 space-y-8 border border-white/5">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Personal Info</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('person.personal_info')}</h3>
             <div className="space-y-6">
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Birthday</p>
-                <p className="font-bold text-lg">{person.birthday || 'N/A'}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">{t('person.birthday')}</p>
+                <p className="font-bold text-lg">{person.birthday || t('details.not_available')}</p>
               </div>
               {person.deathday && (
                 <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Day of Death</p>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">{t('person.deathday')}</p>
                   <p className="font-bold text-lg">{person.deathday}</p>
                 </div>
               )}
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Gender</p>
-                <p className="font-bold text-lg">{person.gender === 1 ? 'Female' : person.gender === 2 ? 'Male' : 'N/A'}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">{t('person.gender')}</p>
+                <p className="font-bold text-lg">{person.gender === 1 ? t('person.gender.female') : person.gender === 2 ? t('person.gender.male') : t('details.not_available')}</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Also Known As</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">{t('person.aka')}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {person.also_known_as?.slice(0, 5).map((name: string) => (
                     <span key={name} className="px-2 py-1 rounded-md bg-white/5 text-[10px] font-medium text-zinc-400 border border-white/5">

@@ -5,6 +5,7 @@ import { Play, Film, Star, Plus, ChevronLeft, Heart, Bookmark } from 'lucide-rea
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import VideoPlayer from './VideoPlayer';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 import Carousel from './Carousel';
 
@@ -12,6 +13,7 @@ export default function MovieDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile, toggleLike, toggleSave, addToContinueWatching } = useAuth();
+  const { t } = useLanguage();
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +21,6 @@ export default function MovieDetailsPage() {
 
   const isLiked = id ? profile?.likes?.includes(id) : false;
   const isSaved = id ? profile?.saved?.includes(id) : false;
-
-  
 
   useEffect(() => {
     const loadMovie = async () => {
@@ -45,13 +45,13 @@ export default function MovieDetailsPage() {
         setMovie(data);
       } catch (err) {
         console.error('Failed to load movie details:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load movie details');
+        setError(err instanceof Error ? err.message : t('details.error.not_found'));
       } finally {
         setLoading(false);
       }
     };
     loadMovie();
-  }, [id]);
+  }, [id, t]);
 
   if (loading) {
     return (
@@ -67,13 +67,13 @@ export default function MovieDetailsPage() {
         <div className="p-4 rounded-full bg-destructive/10 text-destructive">
           <Film className="w-12 h-12" />
         </div>
-        <h2 className="text-2xl font-bold">Movie not found</h2>
+        <h2 className="text-2xl font-bold">{t('details.error.not_found')}</h2>
         <p className="text-on-surface-variant max-w-md">{error}</p>
         <button 
           onClick={() => navigate(-1)}
           className="px-6 py-2 bg-surface-high text-on-surface font-bold rounded-full"
         >
-          Go Back
+          {t('auth.back')}
         </button>
       </div>
     );
@@ -89,18 +89,16 @@ export default function MovieDetailsPage() {
     if (trailer) {
       setShowPlayer(true);
     } else {
-      alert('Trailer não disponível para este título no momento.');
+      alert(t('details.trailer.error'));
     }
   };
 
   const handleWatchNow = () => {
-    // Para um sistema de clone, aqui poderíamos integrar um player de filme real
-    // Por enquanto, se não houver player, mostramos o trailer
     if (trailer) {
       addToContinueWatching(movie.id.toString());
       setShowPlayer(true);
     } else {
-      alert('O filme ainda não está disponível para exibição.');
+      alert(t('details.watch.error'));
     }
   };
 
@@ -163,7 +161,7 @@ export default function MovieDetailsPage() {
               className="px-8 py-4 rounded-full bg-electric-indigo text-obsidian font-bold text-base flex items-center justify-center gap-2 hover:bg-electric-indigo/90 active:scale-95 transition-all shadow-xl shadow-electric-indigo/10"
             >
               <Play className="w-5 h-5 fill-current" />
-              Assistir Trailer
+              {t('details.trailer')}
             </button>
             <button 
               onClick={() => {
@@ -215,14 +213,14 @@ export default function MovieDetailsPage() {
         {/* Left Column: Synopsis & Cast */}
         <div className="lg:col-span-2 space-y-12">
           <div className="space-y-4">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Synopsis</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.synopsis')}</h3>
             <p className="text-lg md:text-xl font-medium leading-relaxed text-on-surface/80 max-w-3xl">
               {movie.overview}
             </p>
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Top Cast</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.cast')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {cast.map((person: any) => (
                 <div 
@@ -247,31 +245,31 @@ export default function MovieDetailsPage() {
         <div className="space-y-6">
           <div className="bg-surface-high/40 backdrop-blur-xl rounded-[2rem] p-8 space-y-8 border border-white/5">
             <div className="space-y-6">
-              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Information</h3>
+              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.info')}</h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Release Date</p>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">{t('details.release_date')}</p>
                   <p className="font-headline font-bold text-lg">{movie.release_date}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Budget</p>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">{t('details.budget')}</p>
                   <p className="font-headline font-bold text-lg">${(movie.budget / 1000000).toFixed(1)}M</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Revenue</p>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">{t('details.revenue')}</p>
                   <p className="font-headline font-bold text-lg">${(movie.revenue / 1000000).toFixed(1)}M</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-6 border-t border-white/5 space-y-3">
-              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">User Rating</h3>
+              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.rating')}</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-headline font-bold tracking-tight">{movie.vote_average?.toFixed(1)}</span>
                 <span className="text-on-surface-variant font-bold text-lg">/ 10</span>
               </div>
               <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">
-                Based on {movie.vote_count?.toLocaleString()} reviews
+                {t('details.reviews')} {movie.vote_count?.toLocaleString()} reviews
               </p>
             </div>
           </div>
@@ -279,7 +277,7 @@ export default function MovieDetailsPage() {
       </section>
 
       {/* Similar Movies */}
-      <Carousel title="Filmes Similares" icon={<Film className="w-5 h-5 text-electric-indigo" />}>
+      <Carousel title={t('details.similar')} icon={<Film className="w-5 h-5 text-electric-indigo" />}>
         {similar.map((m: any) => (
           <div 
             key={m.id} 

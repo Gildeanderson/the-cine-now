@@ -5,6 +5,7 @@ import { Sparkles, Play, Info, Key } from 'lucide-react';
 import { aiService, Recommendation } from '../services/aiService';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 import Carousel from './Carousel';
 
@@ -19,12 +20,12 @@ declare global {
 
 export default function AIRecommendations() {
   const { profile, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [needsKey, setNeedsKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
 
   const lastFetchedProfileRef = useRef<string>('');
 
@@ -99,12 +100,12 @@ export default function AIRecommendations() {
       if (errorMsg.includes('permission denied') || errorMsg.includes('Requested entity was not found') || errorMsg.includes('API_KEY_INVALID')) {
         setNeedsKey(true);
       } else {
-        setError("Não foi possível carregar as recomendações. Verifique sua conexão ou tente novamente mais tarde.");
+        setError(t('ai.error'));
       }
     } finally {
       setLoading(false);
     }
-  }, [profile, authLoading, recommendations.length]);
+  }, [profile, authLoading, recommendations.length, t]);
 
   useEffect(() => {
     fetchAIRecommendations();
@@ -131,10 +132,9 @@ export default function AIRecommendations() {
             <Key className="w-12 h-12" />
           </div>
           <div className="flex-1 space-y-4 text-center md:text-left">
-            <h2 className="text-2xl font-display font-black uppercase tracking-tight">Ative a Inteligência Artificial</h2>
+            <h2 className="text-2xl font-display font-black uppercase tracking-tight">{t('ai.activate')}</h2>
             <p className="text-on-surface-variant max-w-xl">
-              Para receber recomendações personalizadas, você precisa configurar sua chave de API do Gemini. 
-              É rápido e gratuito para desenvolvedores.
+              {t('ai.activate.desc')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
               <button 
@@ -142,7 +142,7 @@ export default function AIRecommendations() {
                 className="px-8 py-3 rounded-full bg-electric-indigo text-obsidian font-bold hover:bg-electric-indigo/90 transition-all flex items-center gap-2"
               >
                 <Key className="w-4 h-4" />
-                Configurar Chave API
+                {t('ai.button.config')}
               </button>
               <a 
                 href="https://ai.google.dev/gemini-api/docs/billing" 
@@ -150,7 +150,7 @@ export default function AIRecommendations() {
                 rel="noopener noreferrer"
                 className="px-8 py-3 rounded-full glass text-on-surface font-bold hover:bg-on-surface/5 transition-all text-sm"
               >
-                Saiba Mais
+                {t('ai.button.learn')}
               </a>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function AIRecommendations() {
 
   return (
     <Carousel 
-      title="Para Você" 
+      title={t('ai.title')} 
       icon={<Sparkles className="w-5 h-5" />}
     >
       {loading ? (
@@ -194,10 +194,10 @@ export default function AIRecommendations() {
                 <div className="space-y-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded bg-electric-indigo text-[10px] font-black uppercase text-obsidian">
-                      IA Suggestion
+                      {t('ai.suggestion')}
                     </span>
                     <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-                      {item.media_type === 'tv' ? 'Série' : 'Filme'}
+                      {item.media_type === 'tv' ? t('ai.media.tv') : t('ai.media.movie')}
                     </span>
                   </div>
                   <h3 className="text-xl font-display font-black uppercase leading-tight truncate">
@@ -210,7 +210,7 @@ export default function AIRecommendations() {
                   <div className="flex items-center gap-3 pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
                     <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-obsidian font-bold text-[10px] uppercase tracking-wider hover:bg-electric-indigo hover:text-white transition-colors">
                       <Play className="w-3 h-3 fill-current" />
-                      Assistir
+                      {t('details.watch')}
                     </button>
                     <button className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors">
                       <Info className="w-4 h-4" />

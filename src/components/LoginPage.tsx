@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LoginPage() {
   const { loginWithGoogle, loginWithEmail, resetPassword, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -171,7 +173,7 @@ export default function LoginPage() {
           className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors group mb-12 w-fit"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-bold uppercase tracking-widest">Voltar</span>
+          <span className="text-sm font-bold uppercase tracking-widest">{t('auth.back')}</span>
         </button>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
@@ -184,7 +186,7 @@ export default function LoginPage() {
               <h1 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-electric-indigo to-indigo-dim drop-shadow-[0_0_25px_rgba(163,166,255,0.4)] uppercase leading-none mb-4">
                 The Cine Now
               </h1>
-              <p className="text-zinc-500 text-sm font-medium tracking-wide">Bem-vindo de volta! Entre na sua conta.</p>
+              <p className="text-zinc-500 text-sm font-medium tracking-wide">{t('auth.welcome')}!</p>
             </div>
 
             {resetSent && (
@@ -226,7 +228,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">Senha</label>
+                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">{t('auth.password')}</label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-electric-indigo transition-colors" />
                   <input
@@ -245,7 +247,7 @@ export default function LoginPage() {
                     disabled={resetLoading}
                     className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-electric-indigo transition-colors disabled:opacity-50"
                   >
-                    {resetLoading ? 'Enviando...' : 'Esqueceu sua senha?'}
+                    {resetLoading ? '...' : t('auth.forgot')}
                   </button>
                 </div>
               </div>
@@ -255,7 +257,7 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 className="w-full bg-electric-indigo text-obsidian font-black uppercase tracking-widest py-3.5 px-6 rounded-xl hover:bg-electric-indigo/90 transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-electric-indigo/10 text-sm"
               >
-                {isSubmitting ? 'Entrando...' : 'Entrar Agora'}
+                {isSubmitting ? '...' : t('auth.signin_now')}
               </button>
             </form>
 
@@ -264,7 +266,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-zinc-900"></div>
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
-                <span className="bg-obsidian px-4 text-zinc-700">Ou continue com</span>
+                <span className="bg-obsidian px-4 text-zinc-700">{t('auth.or_continue')}</span>
               </div>
             </div>
 
@@ -273,20 +275,20 @@ export default function LoginPage() {
               className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3.5 px-6 rounded-xl hover:bg-zinc-100 transition-all active:scale-[0.98] shadow-xl text-sm"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
-              Entrar com Google
+              {t('auth.google_signin')}
             </button>
 
             <p className="mt-10 text-center text-xs text-zinc-600 font-medium">
-              Ainda não tem uma conta?{' '}
+              {t('auth.no_account')}{' '}
               <Link to="/register" className="text-electric-indigo hover:text-electric-indigo/80 transition-colors font-bold underline underline-offset-4">
-                Comece sua jornada aqui
+                {t('auth.register_link')}
               </Link>
             </p>
 
             {/* Author Credit - Restored for Login Screen */}
             <div className="mt-auto pt-8 flex flex-col items-center gap-1.5 opacity-30 select-none">
               <p className="text-[7px] font-black uppercase tracking-[0.3em] text-on-surface">
-                Desenvolvedor do Sistema
+                {t('auth.dev')}
               </p>
               <p className="text-[10px] font-bold text-on-surface uppercase tracking-widest text-center">
                 Gildeanderson Nascimento

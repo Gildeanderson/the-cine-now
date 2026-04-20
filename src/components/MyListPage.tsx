@@ -4,9 +4,11 @@ import { Bookmark, Play, Trash2, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MyListPage() {
   const { profile, toggleSave } = useAuth();
+  const { t } = useLanguage();
   const [myList, setMyList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,10 +64,10 @@ export default function MyListPage() {
       <header className="pt-8 space-y-2">
         <div className="flex items-center gap-3 text-electric-indigo">
           <Bookmark className="w-6 h-6 fill-current" />
-          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">My List</h1>
+          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">{t('mylist.title')}</h1>
         </div>
         <p className="text-on-surface-variant font-medium uppercase tracking-widest text-[10px]">
-          {myList.length} Movies Saved
+          {myList.length} {t('mylist.saved')}
         </p>
       </header>
 
@@ -119,7 +121,7 @@ export default function MyListPage() {
                       className="flex-1 px-6 py-3 rounded-xl bg-electric-indigo text-obsidian font-bold text-sm flex items-center justify-center gap-2 hover:bg-electric-indigo/90 transition-all active:scale-95"
                     >
                       <Play className="w-4 h-4 fill-current" />
-                      Watch Now
+                      {t('mylist.watch')}
                     </Link>
                   </div>
                 </div>
@@ -136,16 +138,16 @@ export default function MyListPage() {
               <Bookmark className="w-10 h-10" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-bold">Your list is empty</h3>
+              <h3 className="text-2xl font-bold">{t('mylist.empty.title')}</h3>
               <p className="text-on-surface-variant max-w-xs mx-auto">
-                Start adding movies to your list to keep track of what you want to watch.
+                {t('mylist.empty.desc')}
               </p>
             </div>
             <Link
               to="/"
               className="inline-block px-8 py-3 rounded-full bg-on-surface text-obsidian font-bold hover:scale-105 transition-transform"
             >
-              Explore Movies
+              {t('mylist.empty.explore')}
             </Link>
           </motion.div>
         )}

@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Edit2, Moon, Bell, User, Download, Globe, LogOut, ChevronRight, Users } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Edit2, Moon, Bell, User, Download, Globe, LogOut, ChevronRight, Users, X, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { notificationService } from '../services/notificationService';
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage, Language } from '../context/LanguageContext';
 
 export default function ProfilePage() {
   const { user, profile, logout, toggleNotifications } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [followedActors, setFollowedActors] = useState<any[]>([]);
   const [loadingActors, setLoadingActors] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleToggleNotifications = async () => {
     const isEnabled = !profile?.notificationsEnabled;
@@ -23,7 +24,7 @@ export default function ProfilePage() {
     if (isEnabled) {
       const granted = await notificationService.requestPermission();
       if (!granted) {
-        alert('Para receber avisos sobre novos filmes e seus atores favoritos, você precisa permitir as notificações no navegador.');
+        alert(t('profile.push.desc'));
         return;
       }
       // Confirmação visual imediata
@@ -55,6 +56,11 @@ export default function ProfilePage() {
     fetchFollowedActors();
   }, [profile?.followingActors?.join(',')]);
 
+  const handleLanguageSelect = (lang: Language) => {
+    setLanguage(lang);
+    setShowLanguageModal(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -82,7 +88,7 @@ export default function ProfilePage() {
         </div>
         <div className="space-y-1">
           <h1 className="text-3xl font-extrabold font-headline tracking-tight">
-            {user?.displayName || 'Usuário'}
+            {user?.displayName || t('auth.name_placeholder')}
           </h1>
           <p className="text-on-surface-variant">{user?.email}</p>
         </div>
@@ -91,18 +97,20 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-surface-low p-6 rounded-xl border border-outline-variant/10">
-          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Membership</p>
+          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">{t('profile.membership')}</p>
           <p className="text-electric-indigo font-headline font-bold text-lg">Premium Ultra</p>
         </div>
         <div className="bg-surface-low p-6 rounded-xl border border-outline-variant/10">
-          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Following</p>
-          <p className="font-headline font-bold text-lg">{profile?.followingActors?.length || 0} Actors</p>
+          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">{t('profile.following')}</p>
+          <p className="font-headline font-bold text-lg">{profile?.followingActors?.length || 0} {t('profile.actors')}</p>
         </div>
       </div>
 
       {/* Followed Actors Section */}
       <div className="space-y-4">
-        <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">Followed Actors</h2>
+        <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">
+          {t('profile.following')} {t('profile.actors')}
+        </h2>
         <div className="bg-surface-low rounded-2xl p-4 border border-outline-variant/10">
           {loadingActors ? (
             <div className="flex justify-center py-4">
@@ -133,7 +141,7 @@ export default function ProfilePage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
               <Users className="w-8 h-8 text-zinc-700" />
-              <p className="text-xs text-zinc-500 font-medium tracking-wide">Você ainda não segue nenhum ator.</p>
+              <p className="text-xs text-zinc-500 font-medium tracking-wide">{t('profile.noActors')}</p>
             </div>
           )}
         </div>
@@ -164,30 +172,102 @@ export default function ProfilePage() {
         <div className="space-y-3">
           <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-electric-indigo px-2">{t('profile.account')}</h2>
           <div className="bg-surface-low rounded-2xl overflow-hidden divide-y divide-outline-variant/5">
-            <SettingItem icon={<User />} title={t('profile.details')} />
+            <SettingItem 
+              icon={<User />} 
+              title={t('profile.details')} 
+              onClick={() => navigate('/profile/details')}
+            />
             <SettingItem icon={<Download />} title={t('profile.downloads')} />
             <SettingItem 
               icon={<Globe />} 
               title={t('profile.language')} 
               badge={language === 'pt-BR' ? 'PT-BR' : 'EN'} 
-              onClick={toggleLanguage}
+              onClick={() => setShowLanguageModal(true)}
             />
           </div>
         </div>
 
         <button 
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 hover:bg-red-500/20 transition-all active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 p-5 bg-surface-low border border-outline-variant/10 rounded-2xl text-on-surface hover:bg-surface-high transition-all active:scale-[0.98]"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-bold tracking-tight">{t('profile.signout')}</span>
         </button>
-        
+
         <p className="text-center text-[10px] text-on-surface-variant/40 tracking-widest font-medium">
           THE CINE NOW VERSION 2.5.0
         </p>
       </div>
+
+      {/* Language Modal */}
+      <AnimatePresence>
+        {showLanguageModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLanguageModal(false)}
+              className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-surface-low rounded-[2rem] border border-outline-variant/10 overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 border-b border-outline-variant/5 flex items-center justify-between bg-surface-high/50">
+                <h3 className="font-headline font-bold text-lg">{t('profile.language.select')}</h3>
+                <button 
+                  onClick={() => setShowLanguageModal(false)}
+                  className="p-2 rounded-full hover:bg-surface-highest transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-2">
+                <LanguageOption 
+                  label={t('profile.language.pt')} 
+                  code="pt-BR" 
+                  active={language === 'pt-BR'} 
+                  onClick={() => handleLanguageSelect('pt-BR')} 
+                />
+                <LanguageOption 
+                  label={t('profile.language.en')} 
+                  code="en" 
+                  active={language === 'en'} 
+                  onClick={() => handleLanguageSelect('en')} 
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
+  );
+}
+
+function LanguageOption({ label, code, active, onClick }: { label: string; code: string; active: boolean; onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center justify-between p-4 rounded-2xl transition-all mb-1 last:mb-0",
+        active ? "bg-electric-indigo/10 text-electric-indigo" : "hover:bg-surface-high text-on-surface-variant"
+      )}
+    >
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest",
+          active ? "bg-electric-indigo text-obsidian" : "bg-surface-highest text-on-surface-variant"
+        )}>
+          {code.split('-')[0]}
+        </div>
+        <span className="font-bold">{label}</span>
+      </div>
+      {active && <Check className="w-5 h-5" />}
+    </button>
   );
 }
 

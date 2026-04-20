@@ -6,6 +6,7 @@ import { tmdbService, getImageUrl } from '../services/tmdbService';
 import VideoPlayer from './VideoPlayer';
 import AIRecommendations from './AIRecommendations';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 import Carousel from './Carousel';
 import { Sparkles, TrendingUp, Tv, Film } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Sparkles, TrendingUp, Tv, Film } from 'lucide-react';
 export default function HomePage() {
   const navigate = useNavigate();
   const { profile, toggleSave, guestContinueWatching, addToContinueWatching } = useAuth();
+  const { t } = useLanguage();
   const [trending, setTrending] = useState<any[]>([]);
   const [trendingTV, setTrendingTV] = useState<any[]>([]);
   const [continueWatching, setContinueWatching] = useState<any[]>([]);
@@ -26,8 +28,6 @@ export default function HomePage() {
   const [genreLoading, setGenreLoading] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [heroTrailer, setHeroTrailer] = useState<any>(null);
-  
-  
 
   useEffect(() => {
     const loadGenreMovies = async () => {
@@ -115,13 +115,13 @@ export default function HomePage() {
         }
       } catch (err) {
         console.error('Failed to load TMDB data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load movie data');
+        setError(err instanceof Error ? err.message : t('home.error.title'));
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
@@ -137,13 +137,13 @@ export default function HomePage() {
         <div className="p-4 rounded-full bg-destructive/10 text-destructive">
           <Play className="w-12 h-12 rotate-90" />
         </div>
-        <h2 className="text-2xl font-bold">Oops! Something went wrong</h2>
+        <h2 className="text-2xl font-bold">{t('home.error.title')}</h2>
         <p className="text-on-surface-variant max-w-md">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-electric-indigo text-obsidian font-bold rounded-full"
         >
-          Try Again
+          {t('home.error.retry')}
         </button>
       </div>
     );
@@ -152,14 +152,13 @@ export default function HomePage() {
   const heroMovie = trending[0];
 
   const handleWatchNow = () => {
-    console.log('handleWatchNow clicked. heroTrailer:', heroTrailer, 'heroMovie:', heroMovie);
     if (heroTrailer) {
       if (heroMovie) {
         addToContinueWatching(heroMovie.id.toString());
       }
       setShowPlayer(true);
     } else {
-      alert('Trailer not available for this movie.');
+      alert(t('home.hero.error'));
     }
   };
 
@@ -193,7 +192,7 @@ export default function HomePage() {
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 scrim-bottom" />
-          <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/40 to-transparent" />
           
           <div className="absolute top-16 inset-x-0 bottom-0 pb-8 md:pb-16 px-8 md:px-16 flex flex-col justify-center w-full md:w-2/3 space-y-6">
             <motion.h2 
@@ -225,14 +224,14 @@ export default function HomePage() {
                 className="px-8 py-4 rounded-full bg-electric-indigo text-obsidian font-bold flex items-center gap-2 hover:bg-electric-indigo/90 active:scale-95 transition-all shadow-lg shadow-electric-indigo/10"
               >
                 <Play className="w-5 h-5 fill-current" />
-                Watch Now
+                {t('home.hero.watch')}
               </button>
               <Link
                 to={`/movie/${heroMovie.id}`}
                 className="px-8 py-4 rounded-full glass text-on-surface font-bold flex items-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
               >
                 <Info className="w-5 h-5" />
-                More Info
+                {t('home.hero.info')}
               </Link>
               <button 
                 onClick={() => {
@@ -252,7 +251,7 @@ export default function HomePage() {
 
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1 rounded-full bg-electric-indigo/20 text-electric-indigo font-bold text-[10px] uppercase tracking-widest border border-electric-indigo/30 whitespace-nowrap">
-                  Trending Now
+                  {t('home.hero.trending')}
                 </span>
                 <div className="flex items-center gap-1 text-yellow-400">
                   <Star className="w-3.5 h-3.5 fill-current" />
@@ -267,7 +266,7 @@ export default function HomePage() {
       {/* Section 1: Continue Watching or Trending */}
       {(continueWatching.length > 0 || trending.length > 0) && (
         <Carousel 
-          title={continueWatching.length > 0 ? 'Continue Assistindo' : 'Tendências da Semana'}
+          title={continueWatching.length > 0 ? t('home.continue') : t('home.trending')}
           icon={<TrendingUp className="w-5 h-5" />}
         >
           {(continueWatching.length > 0 ? continueWatching : trending).slice(0, 40).map((movie, i) => (
@@ -324,15 +323,15 @@ export default function HomePage() {
         <div className="relative rounded-[2rem] overflow-hidden bg-surface-high p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 border border-white/5">
           <div className="absolute inset-0 atmosphere opacity-50" />
           <div className="relative z-10 flex-1 space-y-6">
-            <span className="text-accent font-bold text-xs uppercase tracking-[0.2em]">Curated Collection</span>
+            <span className="text-accent font-bold text-xs uppercase tracking-[0.2em]">{t('home.collection.label')}</span>
             <h3 className="font-headline text-3xl md:text-5xl font-bold tracking-tight leading-tight">
-              The Cyberpunk <br /> Anthology
+              {t('home.collection.title')}
             </h3>
             <p className="text-on-surface-variant max-w-md font-medium">
-              Dive into neon-lit futures, high-tech rebellions, and the blurred lines between man and machine.
+              {t('home.collection.desc')}
             </p>
             <button className="px-8 py-3 rounded-full bg-on-surface text-obsidian font-bold hover:scale-105 transition-transform">
-              Explore Collection
+              {t('home.collection.button')}
             </button>
           </div>
           <div className="relative z-10 flex gap-4 -rotate-6">
@@ -346,7 +345,7 @@ export default function HomePage() {
       </section>
 
       {/* Popular TV Series */}
-      <Carousel title="Séries de TV Populares" icon={<Tv className="w-5 h-5" />}>
+      <Carousel title={t('home.popular_tv')} icon={<Tv className="w-5 h-5" />}>
         {popularTV.slice(0, 40).map((tv, i) => (
           <Link key={`tv-${tv.id}-${i}`} to={`/tv/${tv.id}`} className="flex-none w-40 md:w-48 group">
             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
@@ -373,7 +372,7 @@ export default function HomePage() {
       </Carousel>
 
       {/* Popular Movies Carousel */}
-      <Carousel title="Filmes de Sucesso" icon={<Film className="w-5 h-5 text-electric-indigo" />}>
+      <Carousel title={t('home.popular_movies')} icon={<Film className="w-5 h-5 text-electric-indigo" />}>
         {popular.slice(0, 40).map((movie, i) => (
           <Link key={`popular-${movie.id}-${i}`} to={`/movie/${movie.id}`} className="flex-none w-40 md:w-48 group">
             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">
@@ -394,7 +393,7 @@ export default function HomePage() {
       </Carousel>
 
       {/* Another Carousel for Top Rated (using trending TV for variety) */}
-      <Carousel title="Destaques na TV" icon={<Sparkles className="w-5 h-5 text-electric-indigo" />}>
+      <Carousel title={t('home.tv_highlights')} icon={<Sparkles className="w-5 h-5 text-electric-indigo" />}>
         {trendingTV.slice(0, 40).map((tv, i) => (
           <Link key={`trending-tv-${tv.id}-${i}`} to={`/tv/${tv.id}`} className="flex-none w-40 md:w-48 group">
             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-4 shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-electric-indigo/10">

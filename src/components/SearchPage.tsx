@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Search as SearchIcon, X, History, Grid, List, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useDraggableScroll } from '../hooks/useDraggableScroll';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [genres, setGenres] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeGenre, setActiveGenre] = useState<number | null>(null);
   const genreScroll = useDraggableScroll();
 
   useEffect(() => {
@@ -24,23 +27,52 @@ export default function SearchPage() {
       }
     };
     loadGenres();
+  }, [language]); // Reload genres when language changes
+
+  const loadRecommended = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await tmdbService.getPopular();
+      setResults(data.results.map((r: any) => ({ ...r, media_type: 'movie' })));
+    } catch (err) {
+      console.error('Failed to load recommended:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadGenreResults = useCallback(async (genreId: number) => {
+    setLoading(true);
+    try {
+      const data = await tmdbService.getMoviesByGenre(genreId);
+      setResults(data.results.map((r: any) => ({ ...r, media_type: 'movie' })));
+    } catch (err) {
+      console.error('Failed to load genre results:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     const search = async () => {
       if (!query.trim()) {
-        setResults([]);
+        if (activeGenre) {
+          loadGenreResults(activeGenre);
+        } else {
+          loadRecommended();
+        }
         setError(null);
         return;
       }
       setLoading(true);
       setError(null);
+      setActiveGenre(null); // Clear genre filter when searching
       try {
         const data = await tmdbService.searchMulti(query);
         setResults(data.results.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv'));
       } catch (err) {
         console.error('Search failed:', err);
-        setError(err instanceof Error ? err.message : 'Search failed');
+        setError(err instanceof Error ? err.message : t('search.noresults'));
       } finally {
         setLoading(false);
       }
@@ -48,7 +80,17 @@ export default function SearchPage() {
 
     const timeoutId = setTimeout(search, 500);
     return () => clearTimeout(timeoutId);
-  }, [query]);
+  }, [query, activeGenre, loadRecommended, loadGenreResults, t]);
+
+  const handleGenreClick = (genreId: number) => {
+    if (activeGenre === genreId) {
+      setActiveGenre(null);
+      setQuery('');
+    } else {
+      setQuery('');
+      setActiveGenre(genreId);
+    }
+  };
 
   return (
     <motion.div
@@ -64,7 +106,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search movies, actors, or directors..."
+            placeholder={t('search.placeholder')}
             className="w-full bg-surface-low/40 backdrop-blur-xl border border-white/5 rounded-xl py-4 pl-14 pr-5 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-1 focus:ring-electric-indigo/30 font-medium text-base transition-all"
           />
           {query && (
@@ -80,13 +122,13 @@ export default function SearchPage() {
           onClick={() => navigate(-1)}
           className="text-on-surface-variant hover:text-electric-indigo font-semibold uppercase tracking-widest text-[10px] transition-colors"
         >
-          Cancel
+          {t('search.cancel')}
         </button>
       </div>
 
       {/* Categories */}
       <section className="space-y-4">
-        <h3 className="font-headline font-semibold text-xs tracking-widest uppercase opacity-40">Browse by Genre</h3>
+        <h3 className="font-headline font-semibold text-xs tracking-widest uppercase opacity-40">{t('search.genre')}</h3>
         <div 
           {...genreScroll}
           className="flex gap-3 overflow-x-auto hide-scrollbar pb-2 select-none"
@@ -94,7 +136,13 @@ export default function SearchPage() {
           {genres.map((genre) => (
             <button
               key={genre.id}
-              className="whitespace-nowrap bg-surface-high/40 backdrop-blur-md rounded-full px-6 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5 active:scale-95"
+              onClick={() => handleGenreClick(genre.id)}
+              className={cn(
+                "whitespace-nowrap rounded-full px-6 py-2 text-[10px] font-bold uppercase tracking-widest transition-all border active:scale-95",
+                activeGenre === genre.id 
+                  ? "bg-electric-indigo text-obsidian border-electric-indigo" 
+                  : "bg-surface-high/40 backdrop-blur-md text-on-surface hover:bg-white/10 border-white/5"
+              )}
             >
               {genre.name}
             </button>
@@ -102,19 +150,22 @@ export default function SearchPage() {
         </div>
       </section>
 
-      {/* Recent Searches */}
-      {!query && (
+      {/* Recent Searches (Simplified for now) */}
+      {!query && !activeGenre && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-headline font-semibold text-xs tracking-widest uppercase opacity-40">Recent Searches</h3>
-            <button className="text-electric-indigo text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">Clear All</button>
+            <h3 className="font-headline font-semibold text-xs tracking-widest uppercase opacity-40">{t('search.recent')}</h3>
+            <button className="text-electric-indigo text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">{t('search.clear')}</button>
           </div>
           <div className="flex flex-wrap gap-3">
-            {['Cyberpunk 2077', 'The Last Voyage', 'Interstellar'].map(term => (
-              <div key={term} className="flex items-center gap-2 bg-surface-high/40 backdrop-blur-md px-4 py-2 rounded-lg group hover:bg-white/10 transition-all cursor-pointer border border-white/5">
+            {['Inception', 'The Matrix', 'The Boys'].map(term => (
+              <div 
+                key={term} 
+                onClick={() => setQuery(term)}
+                className="flex items-center gap-2 bg-surface-high/40 backdrop-blur-md px-4 py-2 rounded-lg group hover:bg-white/10 transition-all cursor-pointer border border-white/5"
+              >
                 <History className="w-3.5 h-3.5 text-on-surface-variant group-hover:text-electric-indigo transition-colors" />
                 <span className="text-xs font-semibold text-on-surface-variant group-hover:text-on-surface transition-colors">{term}</span>
-                <X className="w-3.5 h-3.5 text-on-surface-variant hover:text-red-500 transition-colors" />
               </div>
             ))}
           </div>
@@ -125,7 +176,7 @@ export default function SearchPage() {
       <section className="space-y-8">
         <div className="flex items-center justify-between">
           <h3 className="font-headline text-3xl md:text-5xl font-bold tracking-tight">
-            {query ? 'Search Results' : 'Recommended'}
+            {query || activeGenre ? t('search.results') : t('search.recommended')}
           </h3>
           <div className="flex gap-2">
             <button className="w-10 h-10 rounded-xl bg-surface-high/40 backdrop-blur-md flex items-center justify-center text-electric-indigo border border-electric-indigo/20">
@@ -148,14 +199,14 @@ export default function SearchPage() {
               onClick={() => window.location.reload()}
               className="px-8 py-3 rounded-full cinematic-gradient text-obsidian font-bold uppercase tracking-widest text-xs"
             >
-              Retry Search
+              {t('search.retry')}
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
             {results.map(movie => (
               <div
-                key={movie.id}
+                key={`${movie.media_type}-${movie.id}`}
                 className="group cursor-pointer"
                 onClick={() => navigate(`/${movie.media_type || 'movie'}/${movie.id}`)}
               >
@@ -183,12 +234,12 @@ export default function SearchPage() {
                 </div>
               </div>
             ))}
-            {query && results.length === 0 && (
+            {(query || activeGenre) && results.length === 0 && (
               <div className="col-span-full py-24 text-center glass rounded-[2rem] space-y-4">
                 <p className="text-on-surface-variant font-bold uppercase tracking-widest">
-                  No results found for "{query}"
+                  {t('search.noresults')} {query ? `"${query}"` : ''}
                 </p>
-                <p className="text-xs text-on-surface-variant/60">Try different keywords or browse by genre.</p>
+                <p className="text-xs text-on-surface-variant/60">{t('search.noresults.desc')}</p>
               </div>
             )}
           </div>
@@ -196,4 +247,8 @@ export default function SearchPage() {
       </section>
     </motion.div>
   );
+}
+
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
 }

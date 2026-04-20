@@ -5,6 +5,7 @@ import { Play, Film, Star, ChevronLeft, Heart, Bookmark } from 'lucide-react';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import VideoPlayer from './VideoPlayer';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from '../lib/utils';
 import Carousel from './Carousel';
 
@@ -12,6 +13,7 @@ export default function TVDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile, toggleLike, toggleSave, addToContinueWatching } = useAuth();
+  const { t, language } = useLanguage();
   const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,17 +22,15 @@ export default function TVDetailsPage() {
   const isLiked = id ? profile?.likes?.includes(id) : false;
   const isSaved = id ? profile?.saved?.includes(id) : false;
 
-  
-
   useEffect(() => {
     const loadShow = async () => {
       if (!id) return;
       setLoading(true);
       setError(null);
       try {
-        const data = await tmdbService.getTVDetails(id);
+        const data = await tmdbService.getTVDetails(id, language === 'pt-BR' ? 'pt-BR' : 'en-US');
         
-        // If no videos in Portuguese, try English
+        // If no videos in current language, try English as fallback
         if (!data.videos?.results || data.videos.results.length === 0) {
           try {
             const enData = await tmdbService.getTVDetails(id, 'en-US');
@@ -45,13 +45,13 @@ export default function TVDetailsPage() {
         setShow(data);
       } catch (err) {
         console.error('Failed to load TV show details:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load TV show details');
+        setError(err instanceof Error ? err.message : t('details.error.not_found'));
       } finally {
         setLoading(false);
       }
     };
     loadShow();
-  }, [id]);
+  }, [id, language, t]);
 
   if (loading) {
     return (
@@ -67,13 +67,13 @@ export default function TVDetailsPage() {
         <div className="p-4 rounded-full bg-destructive/10 text-destructive">
           <Film className="w-12 h-12" />
         </div>
-        <h2 className="text-2xl font-bold">Show not found</h2>
+        <h2 className="text-2xl font-bold">{t('details.error.not_found')}</h2>
         <p className="text-on-surface-variant max-w-md">{error}</p>
         <button 
           onClick={() => navigate(-1)}
           className="px-6 py-2 bg-surface-high text-on-surface font-bold rounded-full"
         >
-          Go Back
+          {t('auth.back')}
         </button>
       </div>
     );
@@ -89,7 +89,7 @@ export default function TVDetailsPage() {
     if (trailer) {
       setShowPlayer(true);
     } else {
-      alert('Trailer não disponível para esta série no momento.');
+      alert(t('details.trailer.error'));
     }
   };
 
@@ -98,7 +98,7 @@ export default function TVDetailsPage() {
       addToContinueWatching(show.id.toString());
       setShowPlayer(true);
     } else {
-      alert('A série ainda não está disponível para exibição.');
+      alert(t('details.watch.error'));
     }
   };
 
@@ -157,11 +157,11 @@ export default function TVDetailsPage() {
             className="flex flex-wrap gap-3"
           >
             <button 
-              onClick={handleShowTrailer}
+              onClick={handleWatchNow}
               className="px-8 py-4 rounded-full bg-electric-indigo text-obsidian font-bold text-base flex items-center justify-center gap-2 hover:bg-electric-indigo/90 active:scale-95 transition-all shadow-xl shadow-electric-indigo/10"
             >
               <Play className="w-5 h-5 fill-current" />
-              Assistir Trailer
+              {t('details.trailer')}
             </button>
             <button 
               onClick={() => {
@@ -196,7 +196,7 @@ export default function TVDetailsPage() {
 
             <div className="flex items-center gap-2 text-electric-indigo font-bold text-[10px] uppercase tracking-widest">
               <span className="px-2 py-0.5 rounded bg-electric-indigo/10 border border-electric-indigo/20">
-                {show.genres?.[0]?.name || 'TV Series'}
+                {show.genres?.[0]?.name || t('home.tv shows')}
               </span>
               <span>{show.number_of_seasons} Seasons</span>
             </div>
@@ -213,14 +213,14 @@ export default function TVDetailsPage() {
         {/* Left Column: Synopsis & Cast */}
         <div className="lg:col-span-2 space-y-12">
           <div className="space-y-4">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Synopsis</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.synopsis')}</h3>
             <p className="text-lg md:text-xl font-medium leading-relaxed text-on-surface/80 max-w-3xl">
-              {show.overview}
+              {show.overview || t('person.no_biography')}
             </p>
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Top Cast</h3>
+            <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.cast')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {cast.map((person: any) => (
                 <div 
@@ -245,10 +245,10 @@ export default function TVDetailsPage() {
         <div className="space-y-6">
           <div className="bg-surface-high/40 backdrop-blur-xl rounded-[2rem] p-8 space-y-8 border border-white/5">
             <div className="space-y-6">
-              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">Information</h3>
+              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.info')}</h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">First Air Date</p>
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">{t('details.release_date')}</p>
                   <p className="font-headline font-bold text-lg">{show.first_air_date}</p>
                 </div>
                 <div>
@@ -263,13 +263,13 @@ export default function TVDetailsPage() {
             </div>
 
             <div className="pt-6 border-t border-white/5 space-y-3">
-              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">User Rating</h3>
+              <h3 className="text-electric-indigo font-bold text-[10px] uppercase tracking-widest opacity-40">{t('details.rating')}</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-headline font-bold tracking-tight">{show.vote_average?.toFixed(1)}</span>
                 <span className="text-on-surface-variant font-bold text-lg">/ 10</span>
               </div>
               <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">
-                Based on {show.vote_count?.toLocaleString()} reviews
+                {t('details.reviews')} {show.vote_count?.toLocaleString()} reviews
               </p>
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function TVDetailsPage() {
       </section>
 
       {/* Similar Shows */}
-      <Carousel title="Séries Similares" icon={<Play className="w-5 h-5 text-electric-indigo" />}>
+      <Carousel title={t('details.similar')} icon={<Play className="w-5 h-5 text-electric-indigo" />}>
         {similar.map((s: any) => (
           <div 
             key={s.id} 

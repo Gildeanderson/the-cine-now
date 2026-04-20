@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RegisterPage() {
   const { registerWithEmail, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -49,7 +51,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPasswordValid) {
-      setError('A senha não atende aos requisitos de segurança.');
+      setError(t('auth.error.generic'));
       return;
     }
 
@@ -60,9 +62,9 @@ export default function RegisterPage() {
       navigate('/');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já está em uso.');
+        setError(t('auth.error.inuse'));
       } else {
-        setError('Ocorreu um erro ao criar sua conta. Tente novamente.');
+        setError(t('auth.error.generic'));
       }
     } finally {
       setIsSubmitting(false);
@@ -159,7 +161,7 @@ export default function RegisterPage() {
           className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors group mb-8 w-fit"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-bold uppercase tracking-widest">Voltar</span>
+          <span className="text-sm font-bold uppercase tracking-widest">{t('auth.back')}</span>
         </button>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full py-12">
@@ -172,7 +174,7 @@ export default function RegisterPage() {
               <h1 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-electric-indigo to-indigo-dim drop-shadow-[0_0_25px_rgba(163,166,255,0.4)] uppercase leading-none mb-4">
                 The Cine Now
               </h1>
-              <p className="text-zinc-500 text-sm font-medium tracking-wide">Crie sua conta gratuita e comece sua jornada hoje.</p>
+              <p className="text-zinc-500 text-sm font-medium tracking-wide">{t('auth.register_title')}</p>
             </div>
 
             {error && (
@@ -188,7 +190,7 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">Nome Completo</label>
+                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">{t('auth.fullname')}</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-electric-indigo transition-colors" />
                   <input
@@ -196,7 +198,7 @@ export default function RegisterPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Seu nome"
+                    placeholder={t('auth.name_placeholder')}
                     className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
                   />
                 </div>
@@ -218,7 +220,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">Senha</label>
+                <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-1">{t('auth.password')}</label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-electric-indigo transition-colors" />
                   <input
@@ -232,9 +234,9 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="mt-4 space-y-2 px-1">
-                  <ValidationItem label="Mínimo de 8 caracteres" isValid={validations.length} />
-                  <ValidationItem label="Pelo menos uma letra maiúscula" isValid={validations.uppercase} />
-                  <ValidationItem label="Pelo menos um caractere especial" isValid={validations.special} />
+                  <ValidationItem label={t('auth.valid.length')} isValid={validations.length} />
+                  <ValidationItem label={t('auth.valid.upper')} isValid={validations.uppercase} />
+                  <ValidationItem label={t('auth.valid.special')} isValid={validations.special} />
                 </div>
               </div>
 
@@ -243,21 +245,28 @@ export default function RegisterPage() {
                 disabled={isSubmitting || !isPasswordValid}
                 className="w-full bg-electric-indigo text-obsidian font-black uppercase tracking-widest py-3.5 px-6 rounded-xl hover:bg-electric-indigo/90 transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-electric-indigo/10 mt-4 text-sm"
               >
-                {isSubmitting ? 'Criando conta...' : 'Criar Conta Agora'}
+                {isSubmitting ? '...' : t('auth.register_now')}
               </button>
             </form>
 
-            <p className="mt-10 text-center text-xs text-zinc-600 font-medium">
-              Já tem uma conta?{' '}
+            <p className="mt-8 text-center text-xs text-zinc-600 font-medium">
+              {t('auth.have_account')}{' '}
               <Link to="/login" className="text-electric-indigo hover:text-electric-indigo/80 transition-colors font-bold underline underline-offset-4">
-                Fazer login
+                {t('auth.signin_link')}
               </Link>
+            </p>
+
+            <p className="mt-4 text-center text-[10px] text-zinc-600 font-medium px-4 leading-relaxed">
+              {t('auth.agreement')}{' '}
+              <Link to="/privacy" className="text-electric-indigo hover:underline">
+                {t('auth.privacy_link')}
+              </Link>.
             </p>
 
             {/* Author Credit - Restored for Register Screen */}
             <div className="mt-auto pt-8 flex flex-col items-center gap-1.5 opacity-30 select-none">
               <p className="text-[7px] font-black uppercase tracking-[0.3em] text-on-surface">
-                Desenvolvedor do Sistema
+                {t('auth.dev')}
               </p>
               <p className="text-[10px] font-bold text-on-surface uppercase tracking-widest text-center">
                 Gildeanderson Nascimento

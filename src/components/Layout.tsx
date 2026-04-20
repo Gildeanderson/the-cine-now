@@ -3,11 +3,13 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Home, Search, Bookmark, User, Bell, Film, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Layout() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,7 +54,7 @@ export default function Layout() {
               onClick={() => navigate('/login')}
               className="px-4 py-1.5 rounded-full bg-electric-indigo text-obsidian text-xs font-bold hover:bg-electric-indigo/90 transition-all active:scale-95"
             >
-              Entrar
+              {t('auth.login')}
             </button>
           )}
         </div>
@@ -61,14 +63,42 @@ export default function Layout() {
       {/* Main Content */}
       <main className="pb-20">
         <Outlet />
+        
+        {/* Legal Footer */}
+        <footer className="px-6 py-12 border-t border-white/5 bg-surface/30">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <p className="text-[10px] text-on-surface-variant/60 uppercase tracking-[0.2em] font-bold">
+                The Cine Now &copy; 2026
+              </p>
+              <p className="text-[10px] text-on-surface-variant/40 max-w-xs text-center md:text-left leading-relaxed">
+                {t('footer.attribution')}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <NavLink 
+                to="/privacy" 
+                className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant/60 hover:text-electric-indigo transition-colors"
+              >
+                {t('footer.privacy')}
+              </NavLink>
+              <div className="h-4 w-px bg-white/5" />
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant/40">{t('footer.status')}</span>
+              </div>
+            </div>
+          </div>
+        </footer>
       </main>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-obsidian/80 backdrop-blur-xl h-16 px-4 flex justify-around items-center">
-        <NavItem to="/" icon={<Home />} label="Home" />
-        <NavItem to="/foryou" icon={<Sparkles />} label="Para Você" />
-        <NavItem to="/search" icon={<Search />} label="Search" />
-        <NavItem to="/mylist" icon={<Bookmark />} label="My List" />
+        <NavItem to="/" icon={<Home />} label={t('nav.home')} />
+        <NavItem to="/foryou" icon={<Sparkles />} label={t('nav.foryou')} />
+        <NavItem to="/search" icon={<Search />} label={t('nav.search')} />
+        <NavItem to="/mylist" icon={<Bookmark />} label={t('nav.mylist')} />
         <NavItem 
           to="/profile" 
           icon={user?.photoURL ? (
@@ -81,7 +111,7 @@ export default function Layout() {
           ) : (
             <User />
           )} 
-          label="Profile" 
+          label={t('nav.profile')} 
         />
       </nav>
     </div>

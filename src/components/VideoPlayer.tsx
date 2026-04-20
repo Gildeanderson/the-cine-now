@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { X, AlertCircle, Film } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface VideoPlayerProps {
   videoKey: string;
@@ -8,6 +9,8 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ videoKey, title, onClose }: VideoPlayerProps) {
+  const { t } = useLanguage();
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -38,15 +41,15 @@ export default function VideoPlayer({ videoKey, title, onClose }: VideoPlayerPro
             <div className="p-4 rounded-full bg-destructive/10 text-destructive">
               <Film className="w-12 h-12" />
             </div>
-            <h3 className="text-2xl font-bold text-white">Trailer Indisponível</h3>
+            <h3 className="text-2xl font-bold text-white">{t('player.error.title')}</h3>
             <p className="text-zinc-400 max-w-xs">
-              Não conseguimos localizar o vídeo deste título no banco de dados.
+              {t('player.error.desc')}
             </p>
             <button 
               onClick={onClose}
               className="px-8 py-3 bg-white/10 text-white font-bold rounded-full hover:bg-white/20 transition-colors"
             >
-              Fechar Player
+              {t('player.button.close')}
             </button>
           </div>
         )}

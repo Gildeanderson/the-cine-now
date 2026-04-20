@@ -46,31 +46,19 @@ export const aiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ["movie", "tv"] },
-                reason: { type: Type.STRING }
-              },
-              required: ["title", "type", "reason"]
-            }
-          }
-        }
+        model: 'gemini-2.0-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
 
       const text = response.text;
       if (!text) return [];
-      return JSON.parse(text);
+
+      // Clean the text if it contains markdown blocks
+      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanedText);
     } catch (error: any) {
       console.error("Error fetching AI recommendations:", error);
-      throw error;
+      return []; // Return empty instead of throwing
     }
   }
 };

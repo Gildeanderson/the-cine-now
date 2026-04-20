@@ -11,6 +11,8 @@ import ForYouPage from './components/ForYouPage';
 import MyListPage from './components/MyListPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import PrivacyPage from './components/PrivacyPage';
+import ProfileDetailsPage from './components/ProfileDetailsPage';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -25,6 +27,7 @@ function AnimatedRoutes() {
         {/* Public Routes */}
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+        <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
 
         {/* Main Layout with Public and Protected Routes */}
         <Route path="/" element={<Layout />}>
@@ -41,6 +44,14 @@ function AnimatedRoutes() {
             element={
               <AuthGuard>
                 <PageTransition><ProfilePage /></PageTransition>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="profile/details"
+            element={
+              <AuthGuard>
+                <PageTransition><ProfileDetailsPage /></PageTransition>
               </AuthGuard>
             }
           />
