@@ -47,7 +47,7 @@ service cloud.firestore {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
       allow update: if isOwner(userId) && isValidUser(request.resource.data);
-      allow delete: if false; // Users cannot delete their own profile
+      allow delete: if isOwner(userId); // Right to be forgotten (LGPD compliance)
     }
 
     // Default deny
