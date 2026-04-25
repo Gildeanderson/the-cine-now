@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Search, Bookmark, User, Bell, Film, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Home, Search, Bookmark, User, Bell, Film, Sparkles, Menu, LogOut, Settings, Heart, Users, ChevronRight, Share2, Star } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { NotificationCenter } from './NotificationCenter';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -46,9 +49,27 @@ export default function Layout() {
           </button>
           
           {user ? (
-            <button className="p-2 hover:bg-white/5 rounded-full transition-all active:scale-95 text-on-surface-variant/60 hover:text-on-surface">
-              <Bell className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className={clsx(
+                  "p-2 rounded-full transition-all active:scale-95",
+                  isNotificationsOpen ? "bg-white/10 text-white" : "text-on-surface-variant/60 hover:text-on-surface hover:bg-white/5"
+                )}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-surface animate-in zoom-in duration-300">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              <NotificationCenter 
+                isOpen={isNotificationsOpen} 
+                onClose={() => setIsNotificationsOpen(false)} 
+              />
+            </div>
           ) : (
             <button 
               onClick={() => navigate('/login')}

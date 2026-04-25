@@ -1,3 +1,16 @@
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+export interface InternalNotification {
+  id: string;
+  title: string;
+  body: string;
+  type: 'movie' | 'actor' | 'system';
+  read: boolean;
+  createdAt: any;
+  link?: string;
+}
+
 export class NotificationService {
   private static instance: NotificationService;
 
@@ -10,22 +23,28 @@ export class NotificationService {
     return NotificationService.instance;
   }
 
-  async requestPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      console.warn('Este navegador não suporta notificações desktop');
-      return false;
+  private async saveToFirestore(userId: string, title: string, body: string, type: string = 'system', link?: string) {
+    try {
+      const notificationsRef = collection(db, 'users', userId, 'notifications');
+      await addDoc(notificationsRef, {
+        title,
+        body,
+        type,
+        read: false,
+        createdAt: serverTimestamp(),
+        link: link || null
+      });
+    } catch (error) {
+      console.error('Error saving notification to Firestore:', error);
     }
-
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
   }
 
-  send(title: string, body: string, icon = '/logo.png') {
-    console.log('Tentando enviar notificação:', { title, body, status: Notification.permission });
+  async send(title: string, body: string, userId?: string, type: string = 'system', link?: string, icon = '/logo.png') {
+    if (userId) {
+      await this.saveToFirestore(userId, title, body, type, link);
+    }
+
+    console.log('Tentando enviar notificação nativa:', { title, body, status: Notification.permission });
 
     if (Notification.permission === 'granted') {
       try {
@@ -51,27 +70,49 @@ export class NotificationService {
     }
   }
 
+  async requestPermission(): Promise<boolean> {
+    if (!('Notification' in window)) {
+      console.warn('Este navegador não suporta notificações desktop');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+
   // Notificação de Novo Filme (TMDB Simulação)
-  notifyNewMovie(movieName: string) {
+  notifyNewMovie(movieName: string, userId?: string, movieId?: string) {
     this.send(
       '🌟 Novo Lançamento!',
-      `"${movieName}" acaba de ser adicionado ao The Cine Now. Assista agora!`
+      `"${movieName}" acaba de ser adicionado ao The Cine Now. Assista agora!`,
+      userId,
+      'movie',
+      movieId ? `/movie/${movieId}` : undefined
     );
   }
 
   // Notificação de Ator Favorito
-  notifyFavoriteActorNewMovie(actorName: string, movieName: string) {
+  notifyFavoriteActorNewMovie(actorName: string, movieName: string, userId?: string, movieId?: string) {
     this.send(
       '🔥 Alerta de Favorito!',
-      `Seu ator favorito ${actorName} tem um novo filme: "${movieName}". Não perca!`
+      `Seu ator favorito ${actorName} tem um novo filme: "${movieName}". Não perca!`,
+      userId,
+      'actor',
+      movieId ? `/movie/${movieId}` : undefined
     );
   }
 
   // Notificação de Boas-vindas
-  notifyEnabled() {
+  notifyEnabled(userId?: string) {
     this.send(
       '🔔 Notificações Ativadas!',
-      'Você receberá alertas sobre novos lançamentos e seus atores favoritos.'
+      'Você receberá alertas sobre novos lançamentos e seus atores favoritos.',
+      userId,
+      'system'
     );
   }
 }

@@ -13,7 +13,8 @@ import {
   sendPasswordResetEmail,
   deleteUser
 } from '../firebase';
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc, collection, query, orderBy, limit, writeBatch } from 'firebase/firestore';
+import { InternalNotification } from '../services/notificationService';
 
 enum OperationType {
   CREATE = 'create',
@@ -84,6 +85,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   guestContinueWatching: string[];
+  notifications: InternalNotification[];
+  unreadCount: number;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
@@ -93,6 +96,7 @@ interface AuthContextType {
   toggleFollowActor: (actorId: string) => Promise<void>;
   toggleNotifications: (enabled: boolean) => Promise<void>;
   addToContinueWatching: (movieId: string) => Promise<void>;
+  markAllNotificationsAsRead: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -102,23 +106,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [notifications, setNotifications] = useState<InternalNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [guestContinueWatching, setGuestContinueWatching] = useState<string[]>([]);
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   useEffect(() => {
     let unsubProfile: (() => void) | undefined;
+    let unsubNotifications: (() => void) | undefined;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       
-      // Cleanup previous profile listener if it exists
-      if (unsubProfile) {
-        unsubProfile();
-        unsubProfile = undefined;
-      }
+      // Cleanup previous listeners
+      if (unsubProfile) unsubProfile();
+      if (unsubNotifications) unsubNotifications();
+      unsubProfile = undefined;
+      unsubNotifications = undefined;
 
       if (user) {
         const userRef = doc(db, 'users', user.uid);
+        const notificationsRef = collection(db, 'users', user.uid, 'notifications');
+        const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(20));
         
         // Sync user data in background
         const syncUser = async () => {
@@ -154,8 +164,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Profile snapshot error:", error);
           setLoading(false);
         });
+
+        // Notifications listener
+        unsubNotifications = onSnapshot(q, (snapshot) => {
+          const newNotifications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as InternalNotification[];
+          setNotifications(newNotifications);
+        });
       } else {
         setProfile(null);
+        setNotifications([]);
         setLoading(false);
       }
     });
@@ -163,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       unsubscribe();
       if (unsubProfile) unsubProfile();
+      if (unsubNotifications) unsubNotifications();
     };
   }, []);
 
@@ -311,24 +332,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const markAllNotificationsAsRead = async () => {
+    if (!user || unreadCount === 0) return;
+    try {
+      const batch = writeBatch(db);
+      notifications.forEach(notif => {
+        if (!notif.read) {
+          const notifRef = doc(db, 'users', user.uid, 'notifications', notif.id);
+          batch.update(notifRef, { read: true });
+        }
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
+  const value = {
+    user,
+    profile,
+    loading,
+    guestContinueWatching,
+    notifications,
+    unreadCount,
+    loginWithGoogle,
+    loginWithEmail,
+    registerWithEmail,
+    logout,
+    toggleLike,
+    toggleSave,
+    toggleFollowActor,
+    toggleNotifications,
+    addToContinueWatching,
+    markAllNotificationsAsRead,
+    resetPassword,
+    deleteAccount
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      loading, 
-      guestContinueWatching,
-      loginWithGoogle, 
-      loginWithEmail, 
-      registerWithEmail, 
-      logout, 
-      toggleLike, 
-      toggleSave,
-      toggleFollowActor,
-      toggleNotifications,
-      addToContinueWatching,
-      resetPassword,
-      deleteAccount
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
