@@ -1,0 +1,6 @@
+# Ignorar a pasta mobile no deploy da Vercel
+mobile/
+mobile/**
+.expo/
+android/
+ios/
