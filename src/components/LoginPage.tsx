@@ -92,10 +92,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row overflow-hidden relative">
+    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row relative">
       <div className="neon-frame" />
       {/* Left Side: Banner Carousel */}
-      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
+      <div className="absolute inset-0 lg:relative lg:w-[65%] min-h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
         <AnimatePresence mode="wait">
           {banners.length > 0 && (
             <motion.div

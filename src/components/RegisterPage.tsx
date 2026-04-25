@@ -80,10 +80,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row overflow-hidden relative">
+    <div className="min-h-screen bg-obsidian flex flex-col lg:flex-row relative">
       <div className="neon-frame" />
       {/* Left Side: Banner Carousel */}
-      <div className="absolute inset-0 lg:relative lg:w-[65%] h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
+      <div className="absolute inset-0 lg:relative lg:w-[65%] min-h-screen overflow-hidden bg-surface-low order-1 lg:order-1">
         <AnimatePresence mode="wait">
           {banners.length > 0 && (
             <motion.div
@@ -139,7 +139,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Side: Form */}
-      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-outline-variant/10 overflow-y-auto">
+      <div className="w-full lg:w-[35%] min-h-screen flex flex-col p-8 md:p-12 lg:p-16 relative z-10 bg-obsidian/80 backdrop-blur-xl lg:bg-obsidian lg:backdrop-blur-none order-2 lg:order-2 border-l border-outline-variant/10">
         
         {/* Small Theme Toggle */}
         <button 
