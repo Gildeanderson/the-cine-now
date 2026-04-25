@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, Film } from 'lucide-react';
+import { Search, Bell, Film, Home, Sparkles, Bookmark, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -104,11 +104,6 @@ export default function Layout() {
               >
                 {t('footer.privacy')}
               </NavLink>
-              <div className="h-4 w-px bg-white/5" />
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant/40">{t('footer.status')}</span>
-              </div>
             </div>
           </div>
         </footer>
