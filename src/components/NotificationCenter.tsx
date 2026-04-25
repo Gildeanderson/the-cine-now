@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { clsx } from 'clsx';
+import { cn } from '../lib/utils';
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -94,7 +94,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
               <div 
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.link)}
-                className={clsx(
+                className={cn(
                   "p-4 hover:bg-white/5 transition-colors cursor-pointer group relative",
                   !notification.read && "bg-electric-indigo/5"
                 )}
@@ -107,7 +107,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                     {getIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={clsx(
+                    <p className={cn(
                       "text-sm mb-0.5 line-clamp-2",
                       notification.read ? "text-on-surface" : "text-white font-semibold"
                     )}>

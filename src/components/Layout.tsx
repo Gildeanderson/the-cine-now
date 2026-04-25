@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Search, Bookmark, User, Bell, Film, Sparkles, Menu, LogOut, Settings, Heart, Users, ChevronRight, Share2, Star } from 'lucide-react';
+import { Search, Bell, Film } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -11,7 +11,7 @@ export default function Layout() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, unreadCount } = useAuth();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function Layout() {
             <div className="relative">
               <button 
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className={clsx(
+                className={cn(
                   "p-2 rounded-full transition-all active:scale-95",
                   isNotificationsOpen ? "bg-white/10 text-white" : "text-on-surface-variant/60 hover:text-on-surface hover:bg-white/5"
                 )}
