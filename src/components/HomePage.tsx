@@ -191,10 +191,10 @@ export default function HomePage() {
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 scrim-bottom" />
-          <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-black/20 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
           
-          <div className="absolute top-16 inset-x-0 bottom-0 pb-8 md:pb-16 px-8 md:px-16 flex flex-col justify-center w-full md:w-2/3 space-y-6">
+          <div className="absolute top-16 inset-x-0 bottom-0 pb-8 md:pb-16 px-8 md:px-16 flex flex-col justify-center w-full md:w-2/3 space-y-6 text-white">
             <motion.h2 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -208,7 +208,7 @@ export default function HomePage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="text-on-surface-variant text-base md:text-lg max-w-xl font-medium line-clamp-3 md:line-clamp-none"
+              className="text-zinc-300 text-base md:text-lg max-w-xl font-medium line-clamp-3 md:line-clamp-none"
             >
               {heroMovie.overview}
             </motion.p>
@@ -228,7 +228,7 @@ export default function HomePage() {
               </button>
               <Link
                 to={`/movie/${heroMovie.id}`}
-                className="px-8 py-4 rounded-full glass text-on-surface font-bold flex items-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
+                className="px-8 py-4 rounded-full glass text-white font-bold flex items-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
               >
                 <Info className="w-5 h-5" />
                 {t('home.hero.info')}
@@ -243,7 +243,7 @@ export default function HomePage() {
                 }}
                 className={cn(
                   "p-4 rounded-full glass transition-all active:scale-95 border border-white/5",
-                  profile?.saved?.includes(heroMovie.id.toString()) ? "bg-electric-indigo text-obsidian" : "text-on-surface hover:bg-white/10"
+                  profile?.saved?.includes(heroMovie.id.toString()) ? "bg-electric-indigo text-obsidian" : "text-white hover:bg-white/10"
                 )}
               >
                 <Bookmark className={cn("w-6 h-6", profile?.saved?.includes(heroMovie.id.toString()) && "fill-current")} />

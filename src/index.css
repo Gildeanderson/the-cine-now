@@ -34,14 +34,14 @@
 }
 
 .light {
-  --obsidian: #ffffff;
+  --obsidian: #eaecf0;
   --electric-indigo: #5d34f0; /* Um pouco mais saturado para modo claro */
   --indigo-dim: #4321c7;
-  --surface: #f3f5ff;
-  --surface-low: #ffffff;
-  --surface-container: #eef1fe;
-  --surface-high: #e2e7ff;
-  --surface-highest: #d5dbff;
+  --surface: #e1e4e9;
+  --surface-low: #f4f5f7;
+  --surface-container: #d9dee8;
+  --surface-high: #ced4e0;
+  --surface-highest: #c1c9d8;
   --on-surface: #05070a;
   --on-surface-variant: #3d4155; /* Texto secundário mais escuro para ler melhor */
   --outline-variant: #cbd2f8; /* Bordas um pouco mais visíveis */

@@ -127,11 +127,11 @@ export default function MovieDetailsPage() {
           transition={{ duration: 1.5, ease: "easeOut" }}
           src={getImageUrl(movie.backdrop_path, 'original')}
           alt={movie.title}
-          className="w-full h-full object-cover opacity-60"
+          className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 scrim-bottom" />
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-black/20 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
         
         <button
           onClick={() => navigate(-1)}
@@ -140,7 +140,7 @@ export default function MovieDetailsPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="absolute top-16 inset-x-0 bottom-0 pb-12 px-8 md:px-16 flex flex-col justify-center w-full space-y-6 z-20">
+        <div className="absolute top-16 inset-x-0 bottom-0 pb-12 px-8 md:px-16 flex flex-col justify-center w-full space-y-6 z-20 text-white">
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

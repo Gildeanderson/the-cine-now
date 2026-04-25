@@ -208,7 +208,7 @@ export default function AIRecommendations() {
                   </p>
                   
                   <div className="flex items-center gap-3 pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-obsidian font-bold text-[10px] uppercase tracking-wider hover:bg-electric-indigo hover:text-white transition-colors">
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-on-surface text-obsidian font-bold text-[10px] uppercase tracking-wider hover:bg-electric-indigo hover:text-white transition-colors">
                       <Play className="w-3 h-3 fill-current" />
                       {t('details.watch')}
                     </button>

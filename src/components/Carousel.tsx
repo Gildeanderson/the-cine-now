@@ -104,7 +104,7 @@ export default function Carousel({ title, children, icon }: CarouselProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
                 onClick={() => scroll('left')}
-                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-obsidian/80 backdrop-blur-2xl border border-white/20 text-white shadow-2xl hover:bg-electric-indigo hover:text-obsidian hover:scale-110 active:scale-95 transition-all hidden md:flex"
+                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-obsidian/80 backdrop-blur-2xl border border-white/20 text-on-surface shadow-2xl hover:bg-electric-indigo hover:text-obsidian hover:scale-110 active:scale-95 transition-all hidden md:flex"
               >
                 <ChevronLeft className="w-6 h-6" />
               </motion.button>
@@ -114,7 +114,7 @@ export default function Carousel({ title, children, icon }: CarouselProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
                 onClick={() => scroll('right')}
-                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-obsidian/80 backdrop-blur-2xl border border-white/20 text-white shadow-2xl hover:bg-electric-indigo hover:text-obsidian hover:scale-110 active:scale-95 transition-all hidden md:flex"
+                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-obsidian/80 backdrop-blur-2xl border border-white/20 text-on-surface shadow-2xl hover:bg-electric-indigo hover:text-obsidian hover:scale-110 active:scale-95 transition-all hidden md:flex"
               >
                 <ChevronRight className="w-6 h-6" />
               </motion.button>

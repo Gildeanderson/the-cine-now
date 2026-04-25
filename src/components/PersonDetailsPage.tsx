@@ -87,10 +87,10 @@ export default function PersonDetailsPage() {
           <img
             src={getImageUrl(person.combined_credits?.cast?.[0]?.backdrop_path, 'original')}
             alt="Background"
-            className="w-full h-full object-cover opacity-20 blur-sm"
+            className="w-full h-full object-cover opacity-40 blur-sm"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/20 via-obsidian to-obsidian" />
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/40 via-obsidian/80 to-obsidian" />
         </div>
         
         <button

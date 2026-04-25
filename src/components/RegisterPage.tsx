@@ -100,8 +100,8 @@ export default function RegisterPage() {
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-l from-obsidian via-obsidian/20 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               
               <div className="hidden lg:flex absolute inset-0 flex-col justify-end pb-24 px-16">
                 <motion.div
@@ -171,7 +171,7 @@ export default function RegisterPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="mb-10">
-              <h1 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-electric-indigo to-indigo-dim drop-shadow-[0_0_25px_rgba(163,166,255,0.4)] uppercase leading-none mb-4">
+              <h1 className="text-3xl md:text-4xl font-display font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-on-surface via-electric-indigo to-indigo-dim drop-shadow-[0_0_25px_rgba(163,166,255,0.4)] uppercase leading-none mb-4">
                 The Cine Now
               </h1>
               <p className="text-zinc-500 text-sm font-medium tracking-wide">{t('auth.register_title')}</p>
@@ -199,7 +199,7 @@ export default function RegisterPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t('auth.name_placeholder')}
-                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
+                    className="w-full bg-surface-high/50 border border-outline-variant/10 rounded-xl py-3.5 pl-11 pr-4 text-on-surface text-sm placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
                   />
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
-                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
+                    className="w-full bg-surface-high/50 border border-outline-variant/10 rounded-xl py-3.5 pl-11 pr-4 text-on-surface text-sm placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
                   />
                 </div>
               </div>
@@ -229,7 +229,7 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3.5 pl-11 pr-4 text-white text-sm placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
+                    className="w-full bg-surface-high/50 border border-outline-variant/10 rounded-xl py-3.5 pl-11 pr-4 text-on-surface text-sm placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-electric-indigo/50 focus:border-electric-indigo/50 transition-all"
                   />
                 </div>
                 
@@ -264,7 +264,7 @@ export default function RegisterPage() {
             </p>
 
             {/* Author Credit - Restored for Register Screen */}
-            <div className="mt-auto pt-8 flex flex-col items-center gap-1.5 opacity-30 select-none">
+            <div className="mt-auto pt-4 flex flex-col items-center gap-1.5 opacity-30 select-none">
               <p className="text-[7px] font-black uppercase tracking-[0.3em] text-on-surface">
                 {t('auth.dev')}
               </p>

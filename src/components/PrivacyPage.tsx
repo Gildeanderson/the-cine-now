@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowLeft, Shield, Lock, Eye, FileText } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Eye, FileText, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function PrivacyPage() {
@@ -43,7 +43,12 @@ export default function PrivacyPage() {
             <PrivacyCard 
               icon={<Eye className="w-5 h-5" />}
               title="Como usamos seus dados?"
-              content="Seus dados são usados exclusivamente para o funcionamento das funcionalidades do app, como sincronização da sua lista em diferentes dispositivos."
+              content="Seus dados são usados exclusivamente para o funcionamento das funcionalidades do app, como sincronização da sua lista em diferentes dispositivos e geração de recomendações personalizadas."
+            />
+            <PrivacyCard 
+              icon={<Sparkles className="w-5 h-5" />}
+              title="Inteligência Artificial"
+              content="Utilizamos a tecnologia Google Gemini para analisar seus filmes curtidos e salvos, gerando sugestões de conteúdo sob medida para o seu gosto cinematográfico."
             />
             <PrivacyCard 
               icon={<FileText className="w-5 h-5" />}

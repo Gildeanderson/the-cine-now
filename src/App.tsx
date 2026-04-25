@@ -13,6 +13,7 @@ import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import PrivacyPage from './components/PrivacyPage';
 import ProfileDetailsPage from './components/ProfileDetailsPage';
+import NotFoundPage from './components/NotFoundPage';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -64,6 +65,9 @@ function AnimatedRoutes() {
             }
           />
         </Route>
+
+        {/* Catch-all 404 Route */}
+        <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );

@@ -33,7 +33,7 @@ export default function Layout() {
         
         <div className="relative z-10 flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
           <Film className="w-5 h-5 text-electric-indigo/70 group-hover:text-electric-indigo transition-colors" />
-          <h1 className="font-display text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-electric-indigo uppercase drop-shadow-[0_0_10px_rgba(163,166,255,0.3)]">
+          <h1 className="font-display text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-electric-indigo uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
             The Cine Now
           </h1>
         </div>
@@ -65,8 +65,8 @@ export default function Layout() {
         <Outlet />
         
         {/* Legal Footer */}
-        <footer className="px-6 py-12 border-t border-white/5 bg-surface/30">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <footer className="px-6 py-6 border-t border-white/5 bg-surface/30">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col items-center md:items-start gap-2">
               <p className="text-[10px] text-on-surface-variant/60 uppercase tracking-[0.2em] font-bold">
                 The Cine Now &copy; 2026
