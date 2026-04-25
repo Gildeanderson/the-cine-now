@@ -39,6 +39,30 @@ export default function PersonDetailsPage() {
     loadPerson();
   }, [id, t]);
 
+  useEffect(() => {
+    if (person) {
+      document.title = `${person.name} | The Cine Now`;
+      
+      // Add JSON-LD Structured Data
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": person.name,
+        "description": person.biography,
+        "image": getImageUrl(person.profile_path),
+        "jobTitle": person.known_for_department
+      });
+      document.head.appendChild(script);
+      
+      return () => {
+        document.head.removeChild(script);
+        document.title = 'The Cine Now | Explore o melhor do Cinema e TV';
+      };
+    }
+  }, [person]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">

@@ -53,6 +53,36 @@ export default function TVDetailsPage() {
     loadShow();
   }, [id, language, t]);
 
+  useEffect(() => {
+    if (show) {
+      document.title = `${show.name} | The Cine Now`;
+      
+      // Add JSON-LD Structured Data
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "TVSeries",
+        "name": show.name,
+        "description": show.overview,
+        "image": getImageUrl(show.poster_path),
+        "datePublished": show.first_air_date,
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": show.vote_average,
+          "bestRating": "10",
+          "ratingCount": show.vote_count
+        }
+      });
+      document.head.appendChild(script);
+      
+      return () => {
+        document.head.removeChild(script);
+        document.title = 'The Cine Now | Explore o melhor do Cinema e TV';
+      };
+    }
+  }, [show]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
