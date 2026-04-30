@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
-import { Search as SearchIcon, X, History, Grid, List, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search as SearchIcon, X, History, Grid, List, Star, Sparkles, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdbService';
+import { aiService, Recommendation } from '../services/aiService';
 import { useDraggableScroll } from '../hooks/useDraggableScroll';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -11,8 +12,10 @@ export default function SearchPage() {
   const { t, language } = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
+  const [smartResults, setSmartResults] = useState<any[]>([]);
   const [genres, setGenres] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [smartLoading, setSmartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeGenre, setActiveGenre] = useState<number | null>(null);
   const genreScroll = useDraggableScroll();
@@ -27,13 +30,14 @@ export default function SearchPage() {
       }
     };
     loadGenres();
-  }, [language]); // Reload genres when language changes
+  }, [language]);
 
   const loadRecommended = useCallback(async () => {
     setLoading(true);
     try {
       const data = await tmdbService.getPopular();
       setResults(data.results.map((r: any) => ({ ...r, media_type: 'movie' })));
+      setSmartResults([]);
     } catch (err) {
       console.error('Failed to load recommended:', err);
     } finally {
@@ -46,12 +50,75 @@ export default function SearchPage() {
     try {
       const data = await tmdbService.getMoviesByGenre(genreId);
       setResults(data.results.map((r: any) => ({ ...r, media_type: 'movie' })));
+      setSmartResults([]);
     } catch (err) {
       console.error('Failed to load genre results:', err);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const performSmartSearch = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 5) return;
+    
+    console.log("SearchPage: Starting smart search for:", searchTerm);
+    setSmartLoading(true);
+    try {
+      const suggestions = await aiService.searchSmart(searchTerm);
+      console.log("SearchPage: AI suggestions received:", suggestions);
+      
+      if (!suggestions || suggestions.length === 0) {
+        console.warn("SearchPage: AI returned no suggestions.");
+        setSmartLoading(false);
+        return;
+      }
+
+      const enrichedResults = await Promise.all(
+        suggestions.map(async (suggestion) => {
+          try {
+            // Search TMDB with the suggested title
+            const searchData = await tmdbService.searchMulti(suggestion.title);
+            
+            if (!searchData.results || searchData.results.length === 0) {
+              console.warn(`SearchPage: No TMDB results for "${suggestion.title}"`);
+              return null;
+            }
+
+            // Filter for only movies or TV shows
+            const mediaResults = searchData.results.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
+            
+            if (mediaResults.length === 0) {
+              console.warn(`SearchPage: No movie/tv results for "${suggestion.title}"`);
+              return null;
+            }
+
+            // Try to find the best match (exact title or just the first result)
+            const match = mediaResults.find((r: any) => 
+              (r.title || r.name)?.toLowerCase() === suggestion.title.toLowerCase() ||
+              (r.original_title || r.original_name)?.toLowerCase() === suggestion.title.toLowerCase()
+            ) || mediaResults[0];
+            
+            return { 
+              ...match, 
+              reason: suggestion.reason, 
+              media_type: match.media_type || suggestion.type 
+            };
+          } catch (e) {
+            console.error(`SearchPage: Error enriching "${suggestion.title}":`, e);
+            return null;
+          }
+        })
+      );
+
+      const finalResults = enrichedResults.filter(Boolean);
+      console.log("SearchPage: Final enriched results:", finalResults.length);
+      setSmartResults(finalResults);
+    } catch (err) {
+      console.error('SearchPage: Smart search failed:', err);
+    } finally {
+      setSmartLoading(false);
+    }
+  };
 
   useEffect(() => {
     const search = async () => {
@@ -62,14 +129,24 @@ export default function SearchPage() {
           loadRecommended();
         }
         setError(null);
+        setSmartResults([]);
         return;
       }
+      
       setLoading(true);
       setError(null);
-      setActiveGenre(null); // Clear genre filter when searching
+      
       try {
         const data = await tmdbService.searchMulti(query);
-        setResults(data.results.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv'));
+        const filteredResults = data.results.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
+        setResults(filteredResults);
+        
+        // Trigger smart search for any query > 3 chars
+        if (query.trim().length >= 3) {
+          performSmartSearch(query);
+        } else {
+          setSmartResults([]);
+        }
       } catch (err) {
         console.error('Search failed:', err);
         setError(err instanceof Error ? err.message : t('search.noresults'));
@@ -78,7 +155,7 @@ export default function SearchPage() {
       }
     };
 
-    const timeoutId = setTimeout(search, 500);
+    const timeoutId = setTimeout(search, 600);
     return () => clearTimeout(timeoutId);
   }, [query, activeGenre, loadRecommended, loadGenreResults, t]);
 
@@ -172,20 +249,81 @@ export default function SearchPage() {
         </section>
       )}
 
-      {/* Results */}
+      {/* Smart Search Results */}
+      <AnimatePresence>
+        {(smartLoading || smartResults.length > 0) && (
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full cinematic-gradient flex items-center justify-center text-obsidian shadow-lg shadow-electric-indigo/20">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-headline text-2xl font-bold text-white">{t('search.smart_search')}</h3>
+                <p className="text-xs text-on-surface-variant/60">{t('search.smart_desc')}</p>
+              </div>
+            </div>
+
+            {smartLoading ? (
+              <div className="flex items-center gap-4 p-8 glass rounded-3xl">
+                <div className="w-5 h-5 border-2 border-electric-indigo border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium text-on-surface-variant animate-pulse">{t('search.smart_loading')}</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {smartResults.map((movie) => (
+                  <motion.div
+                    key={`smart-${movie.id}`}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => navigate(`/${movie.media_type || 'movie'}/${movie.id}`)}
+                    className="glass p-4 rounded-3xl flex gap-4 cursor-pointer hover:bg-white/5 transition-all group relative overflow-hidden"
+                  >
+                    <div className="w-20 aspect-[2/3] rounded-xl overflow-hidden flex-shrink-0">
+                      <img
+                        src={getImageUrl(movie.poster_path)}
+                        alt={movie.title || movie.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <h4 className="font-bold text-sm truncate pr-6">{movie.title || movie.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                        <span className="text-[10px] font-bold opacity-60">{movie.vote_average?.toFixed(1)}</span>
+                        <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
+                        <span className="text-[10px] font-bold opacity-40 uppercase">{(movie.release_date || movie.first_air_date)?.split('-')[0]}</span>
+                      </div>
+                      <p className="text-[10px] text-on-surface-variant/80 line-clamp-2 leading-relaxed italic bg-white/5 p-2 rounded-lg border border-white/5">
+                        "{movie.reason}"
+                      </p>
+                    </div>
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MessageSquare className="w-4 h-4 text-electric-indigo" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Main Results Grid */}
       <section className="space-y-8">
         <div className="flex items-center justify-between">
-          <h3 className="font-headline text-3xl md:text-5xl font-bold tracking-tight">
-            {query || activeGenre ? t('search.results') : t('search.recommended')}
+          <h3 className="font-headline font-bold text-2xl text-white">
+            {activeGenre ? genres.find(g => g.id === activeGenre)?.name : (query ? t('search.results') : t('search.recommended'))}
           </h3>
-          <div className="flex gap-2">
-            <button className="w-10 h-10 rounded-xl bg-surface-high/40 backdrop-blur-md flex items-center justify-center text-electric-indigo border border-electric-indigo/20">
-              <Grid className="w-4 h-4" />
-            </button>
-            <button className="w-10 h-10 rounded-xl bg-surface-high/40 backdrop-blur-md flex items-center justify-center text-on-surface-variant opacity-40 hover:opacity-100 transition-opacity">
-              <List className="w-4 h-4" />
-            </button>
-          </div>
+          {results.length > 0 && (
+            <span className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
+              {results.length} {t('search.results')}
+            </span>
+          )}
         </div>
 
         {loading ? (
@@ -203,39 +341,53 @@ export default function SearchPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
-            {results.map(movie => (
-              <div
-                key={`${movie.media_type}-${movie.id}`}
-                className="group cursor-pointer"
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
+            {results.map((movie) => (
+              <motion.div
+                key={`${movie.media_type || 'movie'}-${movie.id}`}
+                whileHover={{ y: -10 }}
                 onClick={() => navigate(`/${movie.media_type || 'movie'}/${movie.id}`)}
+                className="group cursor-pointer space-y-4"
               >
-                <div className="aspect-[2/3] rounded-3xl overflow-hidden mb-5 shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-electric-indigo/20 relative">
+                <div className="relative aspect-[2/3] rounded-[2rem] overflow-hidden glass border border-white/5 group-hover:border-electric-indigo/50 transition-all duration-500 shadow-2xl group-hover:shadow-electric-indigo/20">
                   <img
                     src={getImageUrl(movie.poster_path)}
                     alt={movie.title || movie.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  {movie.vote_average > 0 && (
+                    <div className="absolute top-4 right-4 bg-obsidian/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 flex items-center gap-1">
+                      <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                      <span className="text-[10px] font-bold text-white">{movie.vote_average.toFixed(1)}</span>
+                    </div>
+                  )}
                 </div>
-                <h4 className="font-headline font-bold text-lg on-surface truncate group-hover:text-electric-indigo transition-colors">
-                  {movie.title || movie.name}
-                </h4>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-[0.2em]">
-                    {(movie.release_date || movie.first_air_date)?.split('-')[0]}
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    <Star className="w-3 h-3 fill-current" />
-                    <span className="text-[10px] font-bold">{movie.vote_average?.toFixed(1)}</span>
+                
+                <div className="px-2">
+                  <h4 className="font-headline font-bold text-base text-white truncate group-hover:text-electric-indigo transition-colors duration-300">
+                    {movie.title || movie.name}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1 opacity-40">
+                    <span className="text-[10px] font-bold uppercase tracking-widest">
+                      {(movie.release_date || movie.first_air_date)?.split('-')[0]}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-white" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">
+                      {movie.media_type === 'tv' ? 'Série' : 'Filme'}
+                    </span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-            {(query || activeGenre) && results.length === 0 && (
+            {(query || activeGenre) && results.length === 0 && !smartLoading && smartResults.length === 0 && (
               <div className="col-span-full py-24 text-center glass rounded-[2rem] space-y-4">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <SearchIcon className="w-8 h-8 text-on-surface-variant/20" />
+                </div>
                 <p className="text-on-surface-variant font-bold uppercase tracking-widest">
                   {t('search.noresults')} {query ? `"${query}"` : ''}
                 </p>

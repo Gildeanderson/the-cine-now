@@ -1,43 +1,78 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
-
 export interface Recommendation {
   title: string;
   type: 'movie' | 'tv';
   reason: string;
 }
 
+const getApiKey = () => process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
 export const aiService = {
   getRecommendations: async (
     saved: string[],
   ): Promise<Recommendation[]> => {
-    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-      console.warn("EXPO_PUBLIC_GEMINI_API_KEY is missing or is a placeholder.");
-      return [];
-    }
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const apiKey = getApiKey();
+    if (!apiKey) return [];
 
     const prompt = `
-      Você é um especialista em cinema e TV. 
-      Com base nos seguintes filmes salvos pelo usuário (IDs TMDB): ${saved.join(', ')}
-
-      Sugira 5 filmes ou séries que este usuário provavelmente gostaria.
-      Retorne APENAS um array JSON com objetos contendo: title, type (movie ou tv) e reason (motivo curto em português).
+      Com base nos filmes salvos: ${saved.join(', ')}
+      Sugira 5 filmes/séries.
+      Retorne APENAS JSON: [{"title": "...", "type": "movie"|"tv", "reason": "..."}]
     `;
 
     try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      // Clean text to ensure it's valid JSON
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) return [];
+
       const cleanJson = text.replace(/```json|```/g, '').trim();
       return JSON.parse(cleanJson);
-    } catch (error: any) {
-      console.error("Error fetching AI recommendations:", error);
+    } catch (error) {
+      console.error("Mobile AI Recommendations Error:", error);
+      return [];
+    }
+  },
+
+  searchSmart: async (query: string): Promise<Recommendation[]> => {
+    const apiKey = getApiKey();
+    if (!apiKey) return [];
+
+    const prompt = `
+      Atue como assistente inteligente de busca de cinema/TV.
+      Busca do usuário: "${query}"
+
+      1. Corrija erros de digitação mentalmente.
+      2. Entenda se o usuário quer filmes, séries ou um tema específico.
+      3. Sugira 5 títulos excelentes que correspondam à intenção.
+      
+      Retorne APENAS JSON: [{"title": "Título em PT-BR", "type": "movie"|"tv", "reason": "Motivo"}]
+    `;
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) return [];
+
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      const cleanJson = jsonMatch ? jsonMatch[0] : text.replace(/```json|```/g, '').trim();
+      return JSON.parse(cleanJson);
+    } catch (error) {
+      console.error("Mobile Smart Search Error:", error);
       return [];
     }
   }

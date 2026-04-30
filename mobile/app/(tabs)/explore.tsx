@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, TextInput, View, FlatList, Pressable, ActivityIndicator, Dimensions } from 'react-native';
-import { Search as SearchIcon, X, History, Star, Compass } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, TextInput, View, FlatList, Pressable, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+import { Search as SearchIcon, X, History, Star, Compass, Sparkles, MessageSquare } from 'lucide-react-native';
 import { tmdbService, getImageUrl } from '@/services/tmdb-service';
+import { aiService } from '@/services/ai-service';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MovieCard } from '@/components/MovieCard';
@@ -10,8 +11,10 @@ import { router } from 'expo-router';
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
+  const [smartResults, setSmartResults] = useState<any[]>([]);
   const [genres, setGenres] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [smartLoading, setSmartLoading] = useState(false);
   const [popular, setPopular] = useState<any[]>([]);
 
   useEffect(() => {
@@ -30,16 +33,59 @@ export default function ExploreScreen() {
     loadInitialData();
   }, []);
 
+  const performSmartSearch = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 5) return;
+    
+    setSmartLoading(true);
+    try {
+      const suggestions = await aiService.searchSmart(searchTerm);
+      
+      const enrichedResults = await Promise.all(
+        suggestions.map(async (suggestion) => {
+          try {
+            const searchData = await tmdbService.searchMulti(suggestion.title);
+            const match = searchData.results.find((r: any) => 
+              (r.title || r.name)?.toLowerCase() === suggestion.title.toLowerCase()
+            ) || searchData.results[0];
+            
+            if (match) {
+              return { ...match, reason: suggestion.reason };
+            }
+            return null;
+          } catch (e) {
+            return null;
+          }
+        })
+      );
+
+      setSmartResults(enrichedResults.filter(Boolean));
+    } catch (err) {
+      console.error('Smart search failed:', err);
+    } finally {
+      setSmartLoading(false);
+    }
+  };
+
   useEffect(() => {
     const search = async () => {
       if (!query.trim()) {
         setResults([]);
+        setSmartResults([]);
         return;
       }
       setLoading(true);
       try {
         const data = await tmdbService.searchMulti(query);
         setResults(data.results.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv'));
+        
+        const isDescriptive = query.split(' ').length >= 3 || 
+                             /quero|filme|série|tema|ator|atriz|sobre/i.test(query);
+        
+        if (isDescriptive) {
+          performSmartSearch(query);
+        } else {
+          setSmartResults([]);
+        }
       } catch (err) {
         console.error('Search failed:', err);
       } finally {
@@ -47,7 +93,7 @@ export default function ExploreScreen() {
       }
     };
 
-    const timeoutId = setTimeout(search, 500);
+    const timeoutId = setTimeout(search, 600);
     return () => clearTimeout(timeoutId);
   }, [query]);
 
@@ -97,15 +143,57 @@ export default function ExploreScreen() {
                 />
               </View>
             )}
+
+            {/* Smart Search Results Section */}
+            {(smartLoading || smartResults.length > 0) && (
+              <View style={styles.smartSection}>
+                <View style={styles.smartHeader}>
+                  <Sparkles size={20} color="#6b46ff" />
+                  <ThemedText style={styles.smartTitle}>Busca Inteligente</ThemedText>
+                </View>
+                
+                {smartLoading ? (
+                  <View style={styles.smartLoading}>
+                    <ActivityIndicator size="small" color="#6b46ff" />
+                    <ThemedText style={styles.smartLoadingText}>IA está analisando...</ThemedText>
+                  </View>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.smartScroll}>
+                    {smartResults.map((item) => (
+                      <Pressable 
+                        key={`smart-${item.id}`}
+                        onPress={() => router.push(`/detail/${item.id}`)}
+                        style={styles.smartCard}
+                      >
+                        <View style={styles.smartPosterContainer}>
+                          <MovieCard 
+                            movie={item} 
+                            onPress={() => router.push(`/detail/${item.id}`)}
+                            width={120}
+                          />
+                        </View>
+                        <View style={styles.reasonContainer}>
+                          <MessageSquare size={12} color="#a1a1aa" />
+                          <ThemedText style={styles.reasonText} numberOfLines={2}>
+                            {item.reason}
+                          </ThemedText>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            )}
+
             <ThemedText style={styles.sectionTitle}>
-              {query ? `Resultados para "${query}"` : 'Recomendados'}
+              {query ? `Resultados TMDB` : 'Recomendados'}
             </ThemedText>
           </>
         }
         renderItem={({ item }) => (
           <MovieCard 
             movie={item} 
-            onPress={() => {}}
+            onPress={() => router.push(`/detail/${item.id}`)}
             width={(Dimensions.get('window').width - 56) / 2}
           />
         )}
@@ -186,5 +274,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     color: '#a1a1aa',
-  }
+  },
+  smartSection: {
+    marginBottom: 30,
+    backgroundColor: 'rgba(107, 70, 255, 0.05)',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 70, 255, 0.1)',
+  },
+  smartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  smartTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  smartLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+  },
+  smartLoadingText: {
+    fontSize: 14,
+    color: '#a1a1aa',
+    fontStyle: 'italic',
+  },
+  smartScroll: {
+    marginHorizontal: -8,
+  },
+  smartCard: {
+    width: 136,
+    paddingHorizontal: 8,
+  },
+  smartPosterContainer: {
+    marginBottom: 8,
+  },
+  reasonContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 8,
+    borderRadius: 12,
+  },
+  reasonText: {
+    fontSize: 10,
+    color: '#a1a1aa',
+    fontStyle: 'italic',
+    flex: 1,
+  },
 });

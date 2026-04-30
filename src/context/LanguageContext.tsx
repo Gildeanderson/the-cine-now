@@ -96,6 +96,10 @@ const translations: Record<string, Record<Language, string>> = {
   'search.noresults': { en: 'No results found', 'pt-BR': 'Nenhum resultado encontrado' },
   'search.noresults.desc': { en: 'Try different keywords or browse by genre.', 'pt-BR': 'Tente palavras-chave diferentes ou navegue por gênero.' },
   'search.retry': { en: 'Retry Search', 'pt-BR': 'Tentar novamente' },
+  'search.smart_search': { en: 'AI Smart Search', 'pt-BR': 'Busca Inteligente com IA' },
+  'search.smart_desc': { en: 'Our AI interpreted your request and found these titles:', 'pt-BR': 'Nossa IA interpretou seu pedido e encontrou estes títulos:' },
+  'search.try_smart': { en: 'Try AI Smart Search', 'pt-BR': 'Tentar Busca Inteligente com IA' },
+  'search.smart_loading': { en: 'AI is analyzing your request...', 'pt-BR': 'A IA está analisando seu pedido...' },
 
   // Details
   'details.trailer': { en: 'Watch Trailer', 'pt-BR': 'Assistir Trailer' },
